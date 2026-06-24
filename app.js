@@ -1394,7 +1394,7 @@ function generatePDF() {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('◈ Kerta', margin, 13);
+  doc.text('* Kerta', margin, 13);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
@@ -1534,22 +1534,63 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
     y += 6;
 
     const hpRows = hpAktif.map(h => {
-      const sisa = h.jumlah - (h.terbayar || 0);
-      const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(h.nama), hapusEmoji(h.keterangan) || '-', tgl, formatRupiah(sisa)];
-    });
+  const sisa = h.jumlah - (h.terbayar || 0);
+  const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const ket = h.keterangan ? hapusEmoji(h.keterangan) : (h.tipe === 'piutang' ? 'Piutang kepada ' + hapusEmoji(h.nama) : 'Hutang kepada ' + hapusEmoji(h.nama));
+  return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(h.nama), ket, tgl, formatRupiah(h.jumlah), formatRupiah(h.terbayar || 0), formatRupiah(sisa)];
+});
 
-    doc.autoTable({
+doc.autoTable({
   startY: y,
-  head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Sisa']],
+  head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Total', 'Terbayar', 'Sisa']],
   body: hpRows,
   theme: 'striped',
   headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-  styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+  styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
   margin: { left: margin, right: margin }
 });
     y = doc.lastAutoTable.finalY + 10;
   }
+
+// ======= TARGET =======
+if (targetData.length > 0) {
+  if (y > 220) { doc.addPage(); y = 20; }
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TARGET KEUANGAN', margin, y);
+  y += 2;
+  doc.line(margin, y, pageW - margin, y);
+  y += 6;
+
+  const targetRows = targetData.map(tgt => {
+    const terkumpul = tgt.terkumpul || 0;
+    const sisa = tgt.jumlah - terkumpul;
+    const persen = tgt.jumlah > 0 ? ((terkumpul / tgt.jumlah) * 100).toFixed(1) : 0;
+    const status = sisa <= 0 ? 'Tercapai' : persen >= 75 ? 'Hampir' : 'Dalam proses';
+    return [
+      hapusEmoji(tgt.nama),
+      formatRupiah(tgt.jumlah),
+      formatRupiah(terkumpul),
+      formatRupiah(sisa),
+      persen + '%',
+      tgt.deadline || '-',
+      status
+    ];
+  });
+
+  doc.autoTable({
+    startY: y,
+    head: [['Nama Target', 'Target', 'Terkumpul', 'Sisa', '%', 'Deadline', 'Status']],
+    body: targetRows,
+    theme: 'striped',
+    headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+    margin: { left: margin, right: margin }
+  });
+  y = doc.lastAutoTable.finalY + 10;
+}
 
   // ======= FOOTER =======
   const pageCount = doc.internal.getNumberOfPages();
@@ -1561,7 +1602,7 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('◈ Kerta · Laporan otomatis', margin, footerY);
+    doc.text('* Kerta · Laporan otomatis', margin, footerY);
     doc.text(`Halaman ${i} dari ${pageCount}`, pageW - margin, footerY, { align: 'right' });
   }
 
