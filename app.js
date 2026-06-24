@@ -1497,7 +1497,7 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
   const txRows = txBulanIni.map(t => {
     const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     const sign = t.tipe === 'masuk' ? '+' : '-';
-    const keterangan = hapusEmoji(t.keterangan).replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    const keterangan = hapusEmoji(t.keterangan);
     return [tgl, keterangan.slice(0, 30), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
   });
   if (txRows.length > 0) {
