@@ -355,6 +355,8 @@ function render() {
   const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const saldo = allMasuk - allKeluar;
 
+  console.log('totalMasuk:', totalMasuk, 'totalKeluar:', totalKeluar, 'saldo:', saldo);
+  document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
