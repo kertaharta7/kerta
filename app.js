@@ -33,6 +33,7 @@ function updateRefs() {
   hpRef = ref(db, 'hutangpiutang');
   targetRef = ref(db, 'target');
   pengaturanRef = ref(db, 'pengaturan');
+  saldoAwalRef = ref(db, 'saldoAwal'); // ← tambah ini
 }
 
 let transaksi = [];
@@ -60,6 +61,8 @@ let katKeluar = [...defaultKatKeluar];
 let katMasuk = [...defaultKatMasuk];
 let bankList = [...defaultBank];
 let pengaturanRef;
+let saldoAwalRef;
+let saldoAwal = {};
 
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
@@ -134,13 +137,20 @@ function mulaiListeners() {
     updateFormOptions();
   });
 
+  const l6 = onValue(saldoAwalRef, (snapshot) => {
+  saldoAwal = snapshot.val() || {};
+  render();
+  renderRekeningList();
+});
+
   listenerRefs = [
-    { ref: transaksiRef, fn: l1 },
-    { ref: budgetRef, fn: l2 },
-    { ref: hpRef, fn: l3 },
-    { ref: targetRef, fn: l4 },
-    { ref: pengaturanRef, fn: l5 }
-  ];
+  { ref: transaksiRef, fn: l1 },
+  { ref: budgetRef, fn: l2 },
+  { ref: hpRef, fn: l3 },
+  { ref: targetRef, fn: l4 },
+  { ref: pengaturanRef, fn: l5 },
+  { ref: saldoAwalRef, fn: l6 }, // ← tambah ini
+];
   
 }
 
@@ -625,8 +635,9 @@ function renderRekeningList() {
   metodeList.forEach(m => {
     const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const saldo = masuk - keluar;
-    if (masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
+    const awal = saldoAwal[m] || 0;
+const saldo = awal + masuk - keluar;
+if (awal > 0 || masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
   });
   if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
   if (rekeningAktif.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>'; return; }
@@ -701,6 +712,11 @@ function bukaCicilan(key, nama, sisa) {
   document.getElementById('cicilan-jumlah').value = '';
   document.getElementById('cicilan-keterangan').value = '';
   document.getElementById('cicilan-tanggal').valueAsDate = new Date();
+
+  // Update pilihan metode pembayaran
+  const metodeEl = document.getElementById('cicilan-metode');
+  if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+
   document.getElementById('form-cicilan').style.display = 'block';
 }
 
@@ -712,11 +728,55 @@ function tutupCicilan() {
 function simpanCicilan() {
   if (!cicilanTargetKey) return;
   const jumlah = parseFloat(document.getElementById('cicilan-jumlah').value);
+  const tanggal = document.getElementById('cicilan-tanggal').value;
+  const metode = document.getElementById('cicilan-metode')?.value || 'Cash';
+  const keterangan = document.getElementById('cicilan-keterangan').value.trim();
+
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah bayar!'); return; }
-  const target = hpData.find(h => h._key === cicilanTargetKey);
-  if (!target) return;
-  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), (target.terbayar || 0) + jumlah);
+  if (!tanggal) { alert('Isi tanggal!'); return; }
+
+  const hp = hpData.find(h => h._key === cicilanTargetKey);
+  if (!hp) return;
+
+  // Update terbayar
+  const terbayarBaru = (hp.terbayar || 0) + jumlah;
+  set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), terbayarBaru);
+
+  // Simpan histori pembayaran ke Firebase
+  const sisaSetelahBayar = hp.jumlah - terbayarBaru;
+  push(ref(db, `hutangpiutang/${cicilanTargetKey}/histori`), {
+    tanggal,
+    jumlah,
+    metode,
+    keterangan: keterangan || (hp.tipe === 'hutang' ? `Bayar hutang — ${hp.nama}` : `Terima piutang — ${hp.nama}`),
+    sisaSetelah: sisaSetelahBayar < 0 ? 0 : sisaSetelahBayar
+  });
+
+  // Catat otomatis ke transaksi
+  if (hp.tipe === 'hutang') {
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'keluar',
+      keterangan: keterangan || `Bayar hutang — ${hp.nama}`,
+      jumlah,
+      kategori: 'Hutang',
+      tanggal,
+      metode
+    });
+  } else {
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'masuk',
+      keterangan: keterangan || `Terima piutang — ${hp.nama}`,
+      jumlah,
+      kategori: 'Piutang',
+      tanggal,
+      metode
+    });
+  }
+
   tutupCicilan();
+  alert(`✅ ${hp.tipe === 'hutang' ? 'Pembayaran hutang' : 'Penerimaan piutang'} sebesar ${formatRupiah(jumlah)} berhasil dicatat!`);
 }
 
 function renderHP() {
@@ -733,14 +793,67 @@ function renderHP() {
   const totalSisa = filtered.reduce((s, h) => s + (h.jumlah - (h.terbayar || 0)), 0);
   container.innerHTML = `<div style="font-size:13px;color:#94a3b8;margin-bottom:10px">Sisa: <strong style="color:${hpTab==='piutang'?'#16a34a':'#dc2626'}">${formatRupiah(totalSisa)}</strong></div>` +
     filtered.map(h => {
-      const terbayar = h.terbayar || 0;
-      const sisa = h.jumlah - terbayar;
-      const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
-      const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
-      const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      const lunas = sisa <= 0;
-      return `<div class="budget-item"><div class="budget-header"><span style="font-weight:500">${h.nama} ${lunas ? '✅' : ''}</span><span class="budget-angka">${formatRupiah(terbayar)} / ${formatRupiah(h.jumlah)}</span></div><div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${h.keterangan || ''} · ${tgl}</div><div class="budget-bar-track"><div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div><div style="display:flex;gap:6px">${!lunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}','${h.nama}',${sisa})">+ Bayar</button>` : ''}<button class="hp-lunas" onclick="editHP('${h._key}')">✏️ Edit</button><button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button></div></div></div>`;
-    }).join('');
+  const terbayar = h.terbayar || 0;
+  const sisa = h.jumlah - terbayar;
+  const persen = Math.min((terbayar / h.jumlah) * 100, 100).toFixed(0);
+  const warna = hpTab === 'piutang' ? '#10b981' : '#ef4444';
+  const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const lunas = sisa <= 0;
+
+  // Render histori pembayaran
+  const historiList = h.histori ? Object.values(h.histori) : [];
+  historiList.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  const historiHTML = historiList.length === 0
+    ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:8px">Belum ada pembayaran.</p>`
+    : historiList.map(item => {
+        const tglItem = new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+            <div>
+              <div style="font-weight:500;color:#1e293b">${item.keterangan}</div>
+              <div style="color:#94a3b8;margin-top:2px">${tglItem} · ${item.metode}</div>
+              <div style="color:#94a3b8;margin-top:1px">Sisa setelah bayar: <strong>${formatRupiah(item.sisaSetelah)}</strong></div>
+            </div>
+            <div style="font-weight:600;color:${hpTab === 'piutang' ? '#16a34a' : '#dc2626'};flex-shrink:0;margin-left:8px">
+              ${formatRupiah(item.jumlah)}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  return `
+    <div class="budget-item">
+      <div class="budget-header">
+        <span style="font-weight:500">${h.nama} ${lunas ? '✅' : ''}</span>
+        <span class="budget-angka">${formatRupiah(terbayar)} / ${formatRupiah(h.jumlah)}</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${h.keterangan || ''} · ${tgl}</div>
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div class="budget-status">Sisa ${formatRupiah(sisa)} (${persen}% terbayar)</div>
+        <div style="display:flex;gap:6px">
+          ${!lunas ? `<button class="hp-lunas" onclick="bukaCicilan('${h._key}','${h.nama}',${sisa})">+ Bayar</button>` : ''}
+          <button class="hp-lunas" onclick="editHP('${h._key}')">✏️ Edit</button>
+          <button class="hp-lunas" onclick="tandaiLunas('${h._key}')" style="color:#dc2626;border-color:#dc2626">🗑 Hapus</button>
+        </div>
+      </div>
+
+      <!-- ACCORDION HISTORI -->
+      <div style="margin-top:10px;border-top:1px solid #f1f5f9;padding-top:8px">
+        <button onclick="toggleHistori('histori-${h._key}')"
+          style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#6366f1;font-family:'Inter',sans-serif;padding:0;display:flex;justify-content:space-between;align-items:center">
+          <span>📋 Histori Pembayaran (${historiList.length})</span>
+          <span id="icon-${h._key}">▼</span>
+        </button>
+        <div id="histori-${h._key}" style="display:none;margin-top:8px">
+          ${historiHTML}
+        </div>
+      </div>
+    </div>
+  `;
+}).join('')
   if (grafikContainer) {
     grafikContainer.innerHTML = filtered.map(h => {
       const terbayar = h.terbayar || 0;
@@ -822,11 +935,31 @@ function tutupDanaTarget() {
 function simpanDanaTarget() {
   if (!targetDanaKey) return;
   const jumlah = parseFloat(document.getElementById('target-dana-jumlah').value);
+  const tanggal = document.getElementById('target-dana-tanggal').value;
+  const metode = document.getElementById('target-dana-metode')?.value || 'Cash';
+
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah dana!'); return; }
+  if (!tanggal) { alert('Isi tanggal!'); return; }
+
   const target = targetData.find(t => t._key === targetDanaKey);
   if (!target) return;
+
+  // Update terkumpul di target
   set(ref(db, `target/${targetDanaKey}/terkumpul`), (target.terkumpul || 0) + jumlah);
+
+  // Catat otomatis ke transaksi sebagai pengeluaran tabungan
+  push(transaksiRef, {
+    id: Date.now(),
+    tipe: 'keluar',
+    keterangan: `Tabungan target — ${target.emoji} ${target.nama}`,
+    jumlah,
+    kategori: 'Tabungan',
+    tanggal,
+    metode
+  });
+
   tutupDanaTarget();
+  alert(`✅ Dana ${formatRupiah(jumlah)} berhasil ditambahkan ke target ${target.nama} dan dicatat di transaksi!`);
 }
 
 function renderTarget() {
@@ -1192,8 +1325,9 @@ function generatePDF() {
   const totalMasuk = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const saldo = allMasuk - allKeluar;
+const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
+const saldo = totalSaldoAwal + allMasuk - allKeluar;
   const cashflow = totalMasuk - totalKeluar;
   const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
   const hariIni = new Date().getDate();
@@ -1337,6 +1471,66 @@ function generatePDF() {
   doc.save(`laporan-kerta-${bulanIni}.pdf`);
   toggleMenu();
 }
+function toggleHistori(id) {
+  const el = document.getElementById(id);
+  const key = id.replace('histori-', '');
+  const icon = document.getElementById('icon-' + key);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▼' : '▲';
+}
+
+function aturSaldoAwal() {
+  // Buat modal
+  const existing = document.getElementById('modal-saldo-awal');
+  if (existing) existing.remove();
+
+  const inputsHTML = bankList.map(b => `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <label style="font-size:13px;font-weight:500;color:#475569;width:80px">${b}</label>
+      <input type="number" id="saldo-awal-${b}" placeholder="0" min="0"
+        value="${saldoAwal[b] || ''}"
+        style="flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;margin-left:12px" />
+    </div>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-saldo-awal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;margin:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0">Atur Saldo Awal</h3>
+        <button onclick="document.getElementById('modal-saldo-awal').remove()"
+          style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8">✕</button>
+      </div>
+      <p style="font-size:12px;color:#94a3b8;margin-bottom:16px">Saldo awal tidak dihitung sebagai pemasukan. Kosongkan jika tidak ada.</p>
+      ${inputsHTML}
+      <button onclick="simpanSaldoAwal()"
+        style="width:100%;padding:12px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px">
+        💾 Simpan Saldo Awal
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Tutup modal kalau klik luar
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+
+function simpanSaldoAwal() {
+  const data = {};
+  bankList.forEach(b => {
+    const val = parseFloat(document.getElementById('saldo-awal-' + b)?.value);
+    if (val && val > 0) data[b] = val;
+  });
+  set(saldoAwalRef, data);
+  document.getElementById('modal-saldo-awal').remove();
+  alert('✅ Saldo awal berhasil disimpan!');
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1382,3 +1576,6 @@ window.hapusKategori = hapusKategori;
 window.tambahBank = tambahBank;
 window.hapusBank = hapusBank;
 window.generatePDF = generatePDF;
+window.toggleHistori = toggleHistori;
+window.aturSaldoAwal = aturSaldoAwal;
+window.simpanSaldoAwal = simpanSaldoAwal;
