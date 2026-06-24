@@ -1372,6 +1372,10 @@ function updateFormOptions() {
   bankList.forEach(b => metodeList.push(b));
 }
 // ======= LAPORAN PDF =======
+function hapusEmoji(str) {
+  if (!str) return '';
+  return str.replace(/[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF]/g, '').trim();
+}
 function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1493,7 +1497,7 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
   const txRows = txBulanIni.map(t => {
     const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     const sign = t.tipe === 'masuk' ? '+' : '-';
-    const keterangan = t.keterangan.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    const keterangan = hapusEmoji(t.keterangan).replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{1F300}-\u{1F9FF}]/gu, '').trim();
     return [tgl, keterangan.slice(0, 30), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
   });
   if (txRows.length > 0) {
@@ -1532,18 +1536,18 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
     const hpRows = hpAktif.map(h => {
       const sisa = h.jumlah - (h.terbayar || 0);
       const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', h.nama, h.keterangan || '-', tgl, formatRupiah(sisa)];
+      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(t.nama), hapusEmoji(h.keterangan) || '-', tgl, formatRupiah(sisa)];
     });
 
     doc.autoTable({
-      startY: y,
-      head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Sisa']],
-      body: hpRows,
-      theme: 'striped',
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-      styles: { fontSize: 9, cellPadding: 3 },
-      margin: { left: margin, right: margin }
-    });
+  startY: y,
+  head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Sisa']],
+  body: hpRows,
+  theme: 'striped',
+  headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
+  styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+  margin: { left: margin, right: margin }
+});
     y = doc.lastAutoTable.finalY + 10;
   }
 
