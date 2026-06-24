@@ -382,6 +382,7 @@
           <div class="budget-form">
             <input type="number" id="cicilan-jumlah" placeholder="Jumlah bayar (Rp)" min="0" />
             <input type="date" id="cicilan-tanggal" />
+            <select id="cicilan-metode"></select>
             <input type="text" id="cicilan-keterangan" placeholder="Keterangan (opsional)" />
             <button class="btn-simpan" onclick="simpanCicilan()">✓ Simpan Bayar</button>
             <button onclick="tutupCicilan()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
@@ -423,16 +424,24 @@
 
     <!-- Form tambah dana ke target -->
     <div id="form-target-dana" style="display:none;margin-top:12px">
-      <div class="section-box">
-        <p id="target-dana-label" style="font-size:13px;font-weight:600;margin-bottom:12px;color:#1e293b"></p>
-        <div class="budget-form">
-          <input type="number" id="target-dana-jumlah" placeholder="Jumlah yang ditambahkan (Rp)" min="0" />
-          <input type="date" id="target-dana-tanggal" />
-          <button class="btn-simpan" onclick="simpanDanaTarget()">✓ Simpan</button>
-          <button onclick="tutupDanaTarget()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
-        </div>
+  <div class="section-box">
+    <p id="target-dana-label" style="font-size:13px;font-weight:600;margin-bottom:12px;color:#1e293b"></p>
+    <div class="budget-form">
+      <input type="number" id="target-dana-jumlah" placeholder="Jumlah yang ditabung (Rp)" min="0" />
+      <input type="date" id="target-dana-tanggal" />
+      <div>
+        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Dari rekening</label>
+        <select id="target-dana-dari"></select>
       </div>
+      <div>
+        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Ke rekening (tabungan)</label>
+        <select id="target-dana-ke"></select>
+      </div>
+      <button class="btn-simpan" onclick="simpanDanaTarget()">✓ Simpan</button>
+      <button onclick="tutupDanaTarget()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Batal</button>
     </div>
+  </div>
+</div>
   </div>
   <!-- TAB PENGATURAN -->
   <div id="tab-pengaturan" class="tab-content">
