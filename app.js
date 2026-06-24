@@ -348,7 +348,11 @@ function render() {
     );
   }
 
-  const filteredBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
+  const filteredBulanIni = transaksi.filter(t => {
+  if (!t.tanggal) return false;
+  const tgl = t.tanggal.length === 10 ? t.tanggal : new Date(t.tanggal).toISOString().slice(0, 10);
+  return tgl.slice(0, 7) === bulanIni;
+});
   const totalMasuk = filteredBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
@@ -498,7 +502,7 @@ function renderBudget() {
   const bulanIni = new Date().toISOString().slice(0, 7);
   const keys = Object.keys(budget);
   const totalAnggaran = Object.values(budget).reduce((s, v) => s + v, 0);
-  const totalTerpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+  .slice(0, 7) === bulanIni
   const totalSisa = totalAnggaran - totalTerpakai;
 
   const elAnggaran = document.getElementById('total-anggaran');
@@ -517,7 +521,7 @@ function renderBudget() {
     else {
       budgetMini.innerHTML = keys.map(kat => {
         const batas = budget[kat];
-        const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+        .slice(0, 7) === bulanIni
         const persen = Math.min((terpakai / batas) * 100, 100).toFixed(0);
         const warna = terpakai > batas ? '#ef4444' : persen >= 80 ? '#f59e0b' : '#10b981';
         return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500">${kat}</span><span style="color:#94a3b8">${formatRupiah(terpakai)} / ${formatRupiah(batas)}</span></div><div style="height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:${persen}%;background:${warna};border-radius:4px;transition:width 0.4s"></div></div></div>`;
@@ -530,7 +534,7 @@ function renderBudget() {
   if (keys.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#aaa">Belum ada anggaran yang diset.</p>'; return; }
   container.innerHTML = keys.map(kat => {
     const batas = budget[kat];
-    const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+    .slice(0, 7) === bulanIni
     const persen = Math.min((terpakai / batas) * 100, 100).toFixed(0);
     let kelas = '', status = '';
     if (terpakai > batas) { kelas = 'lewat'; status = `⚠️ Melebihi ${formatRupiah(terpakai - batas)}`; }
@@ -1094,7 +1098,7 @@ function renderInsight() {
   const now = new Date();
   const bulanIni = now.toISOString().slice(0, 7);
   const bulanLalu = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
-  const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
+  .slice(0, 7) === bulanIni
   const txBulanLalu = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanLalu);
   const insights = [];
   const keluarIni = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
@@ -1111,7 +1115,7 @@ function renderInsight() {
   if (kategoriTerbesar) { const persen = keluarIni > 0 ? ((kategoriTerbesar[1] / keluarIni) * 100).toFixed(0) : 0; insights.push({ icon: '📊', warna: '#6366f1', teks: `Pengeluaran terbesar: <strong>${kategoriTerbesar[0]}</strong> (${persen}% dari total pengeluaran).` }); }
   Object.keys(budget).forEach(kat => {
     const batas = budget[kat];
-    const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s,t) => s+t.jumlah, 0);
+    .slice(0, 7) === bulanIni
     const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
     if (terpakai > batas) insights.push({ icon: '🚨', warna: '#dc2626', teks: `Anggaran <strong>${kat}</strong> melebihi batas! Terpakai ${formatRupiah(terpakai)} dari ${formatRupiah(batas)}.` });
     else if (persen >= 80) insights.push({ icon: '⚡', warna: '#f59e0b', teks: `Anggaran <strong>${kat}</strong> sudah terpakai <strong>${persen}%</strong>.` });
