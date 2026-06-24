@@ -924,9 +924,10 @@ function bukaDanaTarget(key, nama, sisa) {
   document.getElementById('target-dana-jumlah').value = '';
   document.getElementById('target-dana-tanggal').valueAsDate = new Date();
 
-  // Isi dropdown metode dari bankList
-  const metodeEl = document.getElementById('target-dana-metode');
-  if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+  const dariEl = document.getElementById('target-dana-dari');
+  const keEl = document.getElementById('target-dana-ke');
+  if (dariEl) dariEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+  if (keEl) keEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
 
   document.getElementById('form-target-dana').style.display = 'block';
   document.getElementById('form-target-dana').scrollIntoView({ behavior: 'smooth' });
@@ -941,10 +942,12 @@ function simpanDanaTarget() {
   if (!targetDanaKey) return;
   const jumlah = parseFloat(document.getElementById('target-dana-jumlah').value);
   const tanggal = document.getElementById('target-dana-tanggal').value;
-  const metode = document.getElementById('target-dana-metode')?.value || 'Cash';
+  const dari = document.getElementById('target-dana-dari')?.value || 'Cash';
+  const ke = document.getElementById('target-dana-ke')?.value || 'Cash';
 
   if (!jumlah || jumlah <= 0) { alert('Isi jumlah dana!'); return; }
   if (!tanggal) { alert('Isi tanggal!'); return; }
+  if (dari === ke) { alert('Rekening asal dan tujuan tidak boleh sama!'); return; }
 
   const target = targetData.find(t => t._key === targetDanaKey);
   if (!target) return;
@@ -954,28 +957,38 @@ function simpanDanaTarget() {
   // Update terkumpul
   set(ref(db, `target/${targetDanaKey}/terkumpul`), terkumpulBaru);
 
-  // Simpan histori dana ke Firebase
+  // Simpan histori
   push(ref(db, `target/${targetDanaKey}/histori`), {
     tanggal,
     jumlah,
-    metode,
+    dari,
+    ke,
     keterangan: `Tabungan target — ${target.emoji} ${target.nama}`,
     totalSetelah: terkumpulBaru > target.jumlah ? target.jumlah : terkumpulBaru
   });
 
-  // Catat otomatis ke transaksi
+  // Catat sebagai transfer (keluar dari rekening asal, masuk ke rekening tujuan)
   push(transaksiRef, {
     id: Date.now(),
     tipe: 'keluar',
-    keterangan: `Tabungan target — ${target.emoji} ${target.nama}`,
+    keterangan: `Transfer tabungan target — ${target.emoji} ${target.nama}`,
     jumlah,
-    kategori: 'Tabungan',
+    kategori: 'Transfer',
     tanggal,
-    metode
+    metode: dari
+  });
+  push(transaksiRef, {
+    id: Date.now() + 1,
+    tipe: 'masuk',
+    keterangan: `Transfer tabungan target — ${target.emoji} ${target.nama}`,
+    jumlah,
+    kategori: 'Transfer',
+    tanggal,
+    metode: ke
   });
 
   tutupDanaTarget();
-  alert(`✅ Dana ${formatRupiah(jumlah)} dari ${metode} berhasil ditambahkan ke target ${target.nama}!`);
+  alert(`✅ Dana ${formatRupiah(jumlah)} berhasil ditransfer dari ${dari} ke ${ke} untuk target ${target.nama}!`);
 }
 
 function renderTarget() {
@@ -1015,7 +1028,7 @@ const historiHTML = historiList.length === 0
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
           <div>
             <div style="font-weight:500;color:#1e293b">${item.keterangan}</div>
-            <div style="color:#94a3b8;margin-top:2px">${tglItem} · ${item.metode}</div>
+            <div style="color:#94a3b8;margin-top:2px">${tglItem} · ${item.dari} → ${item.ke}</div>
             <div style="color:#94a3b8;margin-top:1px">Total terkumpul: <strong>${formatRupiah(item.totalSetelah)}</strong></div>
           </div>
           <div style="font-weight:600;color:#16a34a;flex-shrink:0;margin-left:8px">${formatRupiah(item.jumlah)}</div>
