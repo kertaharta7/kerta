@@ -309,6 +309,7 @@ function lakukanTransfer() {
 
 // ======= RENDER =======
 function render() {
+  console.log('render() dipanggil'); // ← tambah ini
   const now = new Date();
   const bulanIni = now.toISOString().slice(0, 7);
 
