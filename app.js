@@ -923,6 +923,11 @@ function bukaDanaTarget(key, nama, sisa) {
   document.getElementById('target-dana-label').textContent = `Tambah dana untuk: ${nama} (Kurang: ${formatRupiah(sisa)})`;
   document.getElementById('target-dana-jumlah').value = '';
   document.getElementById('target-dana-tanggal').valueAsDate = new Date();
+
+  // Isi dropdown metode dari bankList
+  const metodeEl = document.getElementById('target-dana-metode');
+  if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
+
   document.getElementById('form-target-dana').style.display = 'block';
   document.getElementById('form-target-dana').scrollIntoView({ behavior: 'smooth' });
 }
@@ -944,10 +949,21 @@ function simpanDanaTarget() {
   const target = targetData.find(t => t._key === targetDanaKey);
   if (!target) return;
 
-  // Update terkumpul di target
-  set(ref(db, `target/${targetDanaKey}/terkumpul`), (target.terkumpul || 0) + jumlah);
+  const terkumpulBaru = (target.terkumpul || 0) + jumlah;
 
-  // Catat otomatis ke transaksi sebagai pengeluaran tabungan
+  // Update terkumpul
+  set(ref(db, `target/${targetDanaKey}/terkumpul`), terkumpulBaru);
+
+  // Simpan histori dana ke Firebase
+  push(ref(db, `target/${targetDanaKey}/histori`), {
+    tanggal,
+    jumlah,
+    metode,
+    keterangan: `Tabungan target — ${target.emoji} ${target.nama}`,
+    totalSetelah: terkumpulBaru > target.jumlah ? target.jumlah : terkumpulBaru
+  });
+
+  // Catat otomatis ke transaksi
   push(transaksiRef, {
     id: Date.now(),
     tipe: 'keluar',
@@ -959,7 +975,7 @@ function simpanDanaTarget() {
   });
 
   tutupDanaTarget();
-  alert(`✅ Dana ${formatRupiah(jumlah)} berhasil ditambahkan ke target ${target.nama} dan dicatat di transaksi!`);
+  alert(`✅ Dana ${formatRupiah(jumlah)} dari ${metode} berhasil ditambahkan ke target ${target.nama}!`);
 }
 
 function renderTarget() {
@@ -989,7 +1005,66 @@ function renderTarget() {
       else if (hari <= 30) deadlineInfo = `<span style="color:#f59e0b;font-size:11px">⏰ ${hari} hari lagi (${tglFormat})</span>`;
       else deadlineInfo = `<span style="color:#94a3b8;font-size:11px">📅 ${tglFormat}</span>`;
     }
-    return `<div class="budget-item" style="background:white;border:1px solid #f1f5f9;border-radius:12px;padding:16px;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><span style="font-size:20px;margin-right:8px">${t.emoji}</span><span style="font-size:15px;font-weight:600;color:#1e293b">${t.nama} ${tercapai ? '✅' : ''}</span></div><div style="display:flex;gap:4px"><button class="budget-hapus" onclick="editTarget('${t._key}')" style="font-size:14px;color:#3b82f6">✏️</button><button class="budget-hapus" onclick="hapusTarget('${t._key}')" style="font-size:14px">🗑</button></div></div>${deadlineInfo ? `<div style="margin-bottom:8px">${deadlineInfo}</div>` : ''}<div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:6px"><span>Terkumpul: <strong style="color:#1e293b">${formatRupiah(terkumpul)}</strong></span><span>Target: <strong style="color:#1e293b">${formatRupiah(t.jumlah)}</strong></span></div><div class="budget-bar-track" style="height:10px"><div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span style="font-size:12px;color:${warna};font-weight:600">${persen}% tercapai</span><div style="display:flex;gap:6px">${!tercapai ? `<span style="font-size:12px;color:#94a3b8">Kurang ${formatRupiah(sisa)}</span><button class="hp-lunas" onclick="bukaDanaTarget('${t._key}','${t.nama}',${sisa})">+ Tambah Dana</button>` : `<span style="font-size:12px;color:#16a34a;font-weight:600">Target tercapai! 🎉</span>`}</div></div></div>`;
+    const historiList = t.histori ? Object.values(t.histori) : [];
+historiList.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+const historiHTML = historiList.length === 0
+  ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:8px">Belum ada dana masuk.</p>`
+  : historiList.map(item => {
+      const tglItem = new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+          <div>
+            <div style="font-weight:500;color:#1e293b">${item.keterangan}</div>
+            <div style="color:#94a3b8;margin-top:2px">${tglItem} · ${item.metode}</div>
+            <div style="color:#94a3b8;margin-top:1px">Total terkumpul: <strong>${formatRupiah(item.totalSetelah)}</strong></div>
+          </div>
+          <div style="font-weight:600;color:#16a34a;flex-shrink:0;margin-left:8px">${formatRupiah(item.jumlah)}</div>
+        </div>
+      `;
+    }).join('');
+
+return `<div class="budget-item" style="background:white;border:1px solid #f1f5f9;border-radius:12px;padding:16px;margin-bottom:12px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+    <div>
+      <span style="font-size:20px;margin-right:8px">${t.emoji}</span>
+      <span style="font-size:15px;font-weight:600;color:#1e293b">${t.nama} ${tercapai ? '✅' : ''}</span>
+    </div>
+    <div style="display:flex;gap:4px">
+      <button class="budget-hapus" onclick="editTarget('${t._key}')" style="font-size:14px;color:#3b82f6">✏️</button>
+      <button class="budget-hapus" onclick="hapusTarget('${t._key}')" style="font-size:14px">🗑</button>
+    </div>
+  </div>
+  ${deadlineInfo ? `<div style="margin-bottom:8px">${deadlineInfo}</div>` : ''}
+  <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:6px">
+    <span>Terkumpul: <strong style="color:#1e293b">${formatRupiah(terkumpul)}</strong></span>
+    <span>Target: <strong style="color:#1e293b">${formatRupiah(t.jumlah)}</strong></span>
+  </div>
+  <div class="budget-bar-track" style="height:10px">
+    <div class="budget-bar-fill" style="width:${persen}%;background:${warna}"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+    <span style="font-size:12px;color:${warna};font-weight:600">${persen}% tercapai</span>
+    <div style="display:flex;gap:6px">
+      ${!tercapai
+        ? `<span style="font-size:12px;color:#94a3b8">Kurang ${formatRupiah(sisa)}</span>
+           <button class="hp-lunas" onclick="bukaDanaTarget('${t._key}','${t.nama}',${sisa})">+ Tambah Dana</button>`
+        : `<span style="font-size:12px;color:#16a34a;font-weight:600">Target tercapai! 🎉</span>`
+      }
+    </div>
+  </div>
+
+  <!-- ACCORDION HISTORI -->
+  <div style="margin-top:10px;border-top:1px solid #f1f5f9;padding-top:8px">
+    <button onclick="toggleHistoriTarget('histori-target-${t._key}')"
+      style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#6366f1;font-family:'Inter',sans-serif;padding:0;display:flex;justify-content:space-between;align-items:center">
+      <span>📋 Histori Dana (${historiList.length})</span>
+      <span id="icon-target-${t._key}">▼</span>
+    </button>
+    <div id="histori-target-${t._key}" style="display:none;margin-top:8px">
+      ${historiHTML}
+    </div>
+  </div>
+</div>`;
   }).join('');
 }
 
@@ -1531,6 +1606,15 @@ function simpanSaldoAwal() {
   document.getElementById('modal-saldo-awal').remove();
   alert('✅ Saldo awal berhasil disimpan!');
 }
+function toggleHistoriTarget(id) {
+  const el = document.getElementById(id);
+  const key = id.replace('histori-target-', '');
+  const icon = document.getElementById('icon-target-' + key);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▼' : '▲';
+}
 
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
@@ -1579,3 +1663,4 @@ window.generatePDF = generatePDF;
 window.toggleHistori = toggleHistori;
 window.aturSaldoAwal = aturSaldoAwal;
 window.simpanSaldoAwal = simpanSaldoAwal;
+window.toggleHistoriTarget = toggleHistoriTarget;
