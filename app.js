@@ -355,7 +355,8 @@ function render() {
   const totalKeluar = filteredBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const saldo = allMasuk - allKeluar;
+  const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
+const saldo = totalSaldoAwal + allMasuk - allKeluar;
 
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
