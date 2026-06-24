@@ -1536,7 +1536,7 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
     const hpRows = hpAktif.map(h => {
       const sisa = h.jumlah - (h.terbayar || 0);
       const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(t.nama), hapusEmoji(h.keterangan) || '-', tgl, formatRupiah(sisa)];
+      return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(h.nama), hapusEmoji(h.keterangan) || '-', tgl, formatRupiah(sisa)];
     });
 
     doc.autoTable({
