@@ -628,6 +628,8 @@ function renderGrafikDonut() {
 }
 
 function renderRekeningList() {
+  console.log('metodeList:', metodeList); // ← tambah ini
+  console.log('saldoAwal:', saldoAwal);   // ← tambah ini
   const container = document.getElementById('rekening-list');
   const elTotal = document.getElementById('total-saldo-rekening');
   if (!container) return;
