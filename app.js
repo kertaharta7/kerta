@@ -96,6 +96,7 @@ function mulaiListeners() {
     snapshot.forEach((child) => {
       transaksi.unshift({ _key: child.key, ...child.val() });
     });
+    console.log('transaksi update:', transaksi.length); // ← tambah ini
     render();
     renderBudget();
     renderInsight();
