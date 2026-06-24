@@ -96,7 +96,6 @@ function mulaiListeners() {
     snapshot.forEach((child) => {
       transaksi.unshift({ _key: child.key, ...child.val() });
     });
-    console.log('transaksi update:', transaksi.length); // ← tambah ini
     render();
     renderBudget();
     renderInsight();
@@ -309,7 +308,6 @@ function lakukanTransfer() {
 
 // ======= RENDER =======
 function render() {
-  console.log('render() dipanggil'); // ← tambah ini
   const now = new Date();
   const bulanIni = now.toISOString().slice(0, 7);
 
@@ -359,7 +357,6 @@ function render() {
   const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const saldo = allMasuk - allKeluar;
 
-  console.log('totalMasuk:', totalMasuk, 'totalKeluar:', totalKeluar, 'saldo:', saldo);
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
@@ -635,8 +632,6 @@ function renderGrafikDonut() {
 }
 
 function renderRekeningList() {
-  console.log('metodeList:', metodeList); // ← tambah ini
-  console.log('saldoAwal:', saldoAwal);   // ← tambah ini
   const container = document.getElementById('rekening-list');
   const elTotal = document.getElementById('total-saldo-rekening');
   if (!container) return;
