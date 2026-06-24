@@ -1505,12 +1505,12 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
       styles: { fontSize: 8, cellPadding: 2 },
       columnStyles: {
-        0: { cellWidth: 16 },
-        1: { cellWidth: 65 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 35, halign: 'right' }
-      },
+  0: { cellWidth: 14 },
+  1: { cellWidth: 60 },
+  2: { cellWidth: 28 },
+  3: { cellWidth: 20 },
+  4: { cellWidth: 30, halign: 'right' }
+},
       margin: { left: margin, right: margin }
     });
     y = doc.lastAutoTable.finalY + 10;
