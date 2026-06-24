@@ -1635,6 +1635,56 @@ function toggleHistoriTarget(id) {
   if (icon) icon.textContent = isOpen ? '▼' : '▲';
 }
 
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Transaksi
+  const txHeader = ['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Tipe', 'Jumlah'];
+  const txRows = [...transaksi]
+    .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
+    .map(t => [
+      t.tanggal,
+      t.keterangan,
+      t.kategori,
+      t.metode,
+      t.tipe === 'masuk' ? 'Pemasukan' : 'Pengeluaran',
+      t.jumlah
+    ]);
+  const wsTx = XLSX.utils.aoa_to_sheet([txHeader, ...txRows]);
+  XLSX.utils.book_append_sheet(wb, wsTx, 'Transaksi');
+
+  // Sheet 2: Hutang Piutang
+  const hpHeader = ['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Total', 'Terbayar', 'Sisa'];
+  const hpRows = hpData.map(h => [
+    h.tipe === 'piutang' ? 'Piutang' : 'Hutang',
+    h.nama,
+    h.keterangan || '-',
+    h.tanggal,
+    h.jumlah,
+    h.terbayar || 0,
+    h.jumlah - (h.terbayar || 0)
+  ]);
+  const wsHP = XLSX.utils.aoa_to_sheet([hpHeader, ...hpRows]);
+  XLSX.utils.book_append_sheet(wb, wsHP, 'Hutang Piutang');
+
+  // Sheet 3: Target
+  const targetHeader = ['Nama', 'Target', 'Terkumpul', 'Sisa', 'Persen', 'Deadline'];
+  const targetRows = targetData.map(t => [
+    t.emoji + ' ' + t.nama,
+    t.jumlah,
+    t.terkumpul || 0,
+    t.jumlah - (t.terkumpul || 0),
+    ((( t.terkumpul || 0) / t.jumlah) * 100).toFixed(1) + '%',
+    t.deadline || '-'
+  ]);
+  const wsTarget = XLSX.utils.aoa_to_sheet([targetHeader, ...targetRows]);
+  XLSX.utils.book_append_sheet(wb, wsTarget, 'Target');
+
+  const tgl = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `kerta-export-${tgl}.xlsx`);
+  toggleMenu();
+}
+
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
 window.setType = setType;
@@ -1683,3 +1733,4 @@ window.toggleHistori = toggleHistori;
 window.aturSaldoAwal = aturSaldoAwal;
 window.simpanSaldoAwal = simpanSaldoAwal;
 window.toggleHistoriTarget = toggleHistoriTarget;
+window.exportExcel = exportExcel;
