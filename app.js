@@ -1673,14 +1673,14 @@ function exportExcel() {
 
   // Sheet 3: Target
   const targetHeader = ['Nama', 'Target', 'Terkumpul', 'Sisa', 'Persen', 'Deadline'];
-  const targetRows = targetData.map(t => [
-    t.emoji + ' ' + t.nama,
-    t.jumlah,
-    t.terkumpul || 0,
-    t.jumlah - (t.terkumpul || 0),
-    ((( t.terkumpul || 0) / t.jumlah) * 100).toFixed(1) + '%',
-    t.deadline || '-'
-  ]);
+  const targetRows = targetData.map(tgt => [
+  hapusEmoji(tgt.emoji + ' ' + tgt.nama),
+  tgt.jumlah,
+  tgt.terkumpul || 0,
+  tgt.jumlah - (tgt.terkumpul || 0),
+  (((tgt.terkumpul || 0) / tgt.jumlah) * 100).toFixed(1) + '%',
+  tgt.deadline || '-'
+]);
   const wsTarget = XLSX.utils.aoa_to_sheet([targetHeader, ...targetRows]);
   XLSX.utils.book_append_sheet(wb, wsTarget, 'Target');
 
