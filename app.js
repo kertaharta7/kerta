@@ -1557,7 +1557,7 @@ if (txRows_data.length > 0) {
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
   0: { cellWidth: 16 },
-  1: { cellWidth: 20 },
+  1: { cellWidth: 24 },
   2: { cellWidth: 44 },
   3: { cellWidth: 20 },
   4: { cellWidth: 24, halign: 'right' },
