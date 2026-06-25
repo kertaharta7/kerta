@@ -1556,14 +1556,14 @@ if (txRows_data.length > 0) {
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 18 },
-        1: { cellWidth: 25 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 27, halign: 'right' },
-        5: { cellWidth: 27, halign: 'right' },
-        6: { cellWidth: 27, halign: 'right' }
-      },
+  0: { cellWidth: 16 },
+  1: { cellWidth: 22 },
+  2: { cellWidth: 48 },
+  3: { cellWidth: 22 },
+  4: { cellWidth: 25, halign: 'right' },
+  5: { cellWidth: 25, halign: 'right' },
+  6: { cellWidth: 24, halign: 'right' }
+},
       margin: { left: margin, right: margin }
     });
     y = doc.lastAutoTable.finalY + 8;
