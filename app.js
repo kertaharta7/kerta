@@ -1490,17 +1490,16 @@ function generatePDF() {
   }
 
   // ======= TRANSAKSI =======
-  const txRows_data = txBulanIni.map(t => {
-    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-    const sign = t.tipe === 'masuk' ? '+' : '-';
-    return [tgl, hapusEmoji(t.keterangan).slice(0, 35), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
-  });
-  
   if (txRows_data.length > 0) {
     y = checkNewPage(y, 30);
     y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI (' + txBulanIni.length + ' transaksi)', y);
   }
 
+  const txRows_data = txBulanIni.map(t => {
+    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    const sign = t.tipe === 'masuk' ? '+' : '-';
+    return [tgl, hapusEmoji(t.keterangan).slice(0, 35), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
+  });
 
   if (txRows_data.length > 0) {
     doc.autoTable({
