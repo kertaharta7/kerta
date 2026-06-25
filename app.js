@@ -1494,11 +1494,14 @@ const txRows_data = txBulanIni.map(t => {
   const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
   const prefix = t.tipe === 'masuk' ? '+' : t.tipe === 'keluar' ? '-' : '⇄';
   const warna = t.tipe === 'masuk' ? [22, 163, 74] : t.tipe === 'keluar' ? [220, 38, 38] : [99, 102, 241];
+  const keterangan = (t.keterangan || '-')
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/[^\x00-\x7F]/g, '');
   return [
     tgl,
-    t.keterangan || '-',
+    keterangan,
     t.kategori || '-',
-    t.rekening || '-',
     { content: prefix + formatRupiah(t.jumlah), styles: { textColor: warna, halign: 'right' } }
   ];
 });
@@ -1508,17 +1511,16 @@ if (txRows_data.length > 0) {
   y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI', y);
   doc.autoTable({
     startY: y,
-    head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
+    head: [['Tanggal', 'Keterangan', 'Kategori', 'Jumlah']],
     body: txRows_data,
     theme: 'striped',
     headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
     styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
     columnStyles: {
-      0: { cellWidth: 16 },
-      1: { cellWidth: 58 },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 20 },
-      4: { cellWidth: 40, halign: 'right' }
+      0: { cellWidth: 20 },
+      1: { cellWidth: 80 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 47, halign: 'right' }
     },
     margin: { left: margin, right: margin }
   });
