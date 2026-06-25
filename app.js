@@ -1556,13 +1556,13 @@ if (txRows_data.length > 0) {
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-  0: { cellWidth: 14 },
-  1: { cellWidth: 20 },
-  2: { cellWidth: 44 },
-  3: { cellWidth: 20 },
-  4: { cellWidth: 24, halign: 'right' },
-  5: { cellWidth: 24, halign: 'right' },
-  6: { cellWidth: 22, halign: 'right' }
+  0: { cellWidth: 12 },
+  1: { cellWidth: 22 },
+  2: { cellWidth: 46 },
+  3: { cellWidth: 22 },
+  4: { cellWidth: 26, halign: 'right' },
+  5: { cellWidth: 26, halign: 'right' },
+  6: { cellWidth: 24, halign: 'right' }
 },
       margin: { left: margin, right: margin }
     });
