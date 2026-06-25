@@ -1511,11 +1511,11 @@ function generatePDF() {
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 16 },
-        1: { cellWidth: 58 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 40, halign: 'right' }
+        0: { cellWidth: 18 },
+        1: { cellWidth: 65 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 47, halign: 'right' }
       },
       margin: { left: margin, right: margin }
     });
