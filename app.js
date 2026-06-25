@@ -1383,241 +1383,245 @@ function generatePDF() {
   const bulanIni = new Date().toISOString().slice(0, 7);
   const namaBulan = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
   const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 14;
+  const contentW = pageW - margin * 2;
+
+  function addSectionTitle(title, yPos) {
+    doc.setTextColor(99, 102, 241);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, margin, yPos);
+    doc.setDrawColor(99, 102, 241);
+    doc.setLineWidth(0.3);
+    doc.line(margin, yPos + 1.5, pageW - margin, yPos + 1.5);
+    doc.setLineWidth(0.2);
+    return yPos + 7;
+  }
+
+  function checkNewPage(yPos, minSpace) {
+    if (yPos + minSpace > pageH - 20) { doc.addPage(); return 20; }
+    return yPos;
+  }
 
   // ======= HEADER =======
   doc.setFillColor(99, 102, 241);
-  doc.rect(0, 0, pageW, 32, 'F');
-
+  doc.rect(0, 0, pageW, 28, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('* Kerta', margin, 13);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Laporan Keuangan Bulanan', margin, 20);
-
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(namaBulan, pageW - margin, 13, { align: 'right' });
+  doc.text('KERTA', margin, 12);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Dicetak: ${tglCetak}`, pageW - margin, 20, { align: 'right' });
+  doc.text('Laporan Keuangan Bulanan', margin, 19);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaBulan, pageW - margin, 12, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Dicetak: ' + tglCetak, pageW - margin, 19, { align: 'right' });
 
-  let y = 42;
+  let y = 36;
 
   // ======= RINGKASAN =======
-  doc.setTextColor(100, 116, 139);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('RINGKASAN KEUANGAN', margin, y);
-  y += 2;
-  doc.setDrawColor(226, 232, 240);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
   const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
   const totalMasuk = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
-const saldo = totalSaldoAwal + allMasuk - allKeluar;
+  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
+  const saldo = totalSaldoAwal + allMasuk - allKeluar;
   const cashflow = totalMasuk - totalKeluar;
   const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
   const hariIni = new Date().getDate();
 
-  const ringkasan = [
-    ['Saldo Total', formatRupiah(saldo), 'Pemasukan Bulan Ini', formatRupiah(totalMasuk)],
-    ['Pengeluaran Bulan Ini', formatRupiah(totalKeluar), 'Cashflow Bersih', (cashflow >= 0 ? '+ ' : '- ') + formatRupiah(Math.abs(cashflow))],
-    ['Saving Rate', savingRate + '%', 'Rata-rata Harian', formatRupiah(totalKeluar / hariIni)],
-  ];
+  y = addSectionTitle('RINGKASAN KEUANGAN', y);
 
+  const colW = contentW / 4;
   doc.autoTable({
     startY: y,
-    head: [],
-    body: ringkasan,
+    body: [
+      ['Saldo Total', formatRupiah(saldo), 'Pemasukan Bulan Ini', formatRupiah(totalMasuk)],
+      ['Pengeluaran Bulan Ini', formatRupiah(totalKeluar), 'Cashflow Bersih', (cashflow >= 0 ? '+' : '-') + formatRupiah(Math.abs(cashflow))],
+      ['Saving Rate', savingRate + '%', 'Rata-rata Pengeluaran/Hari', formatRupiah(hariIni > 0 ? totalKeluar / hariIni : 0)],
+    ],
     theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 3 },
+    styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
     columnStyles: {
-      0: { cellWidth: 45, fontStyle: 'bold', textColor: [100, 116, 139] },
-      1: { cellWidth: 45, textColor: [30, 41, 59] },
-      2: { cellWidth: 45, fontStyle: 'bold', textColor: [100, 116, 139] },
-      3: { cellWidth: 45, textColor: [30, 41, 59] }
+      0: { cellWidth: colW, fontStyle: 'bold', textColor: [100, 116, 139], fillColor: [248, 250, 252] },
+      1: { cellWidth: colW, textColor: [30, 41, 59] },
+      2: { cellWidth: colW, fontStyle: 'bold', textColor: [100, 116, 139], fillColor: [248, 250, 252] },
+      3: { cellWidth: colW, textColor: [30, 41, 59] }
     },
     margin: { left: margin, right: margin }
   });
-
-  y = doc.lastAutoTable.finalY + 10;
+  y = doc.lastAutoTable.finalY + 8;
 
   // ======= ANGGARAN =======
-  doc.setTextColor(100, 116, 139);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('REALISASI ANGGARAN', margin, y);
-  y += 2;
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
   const anggaranRows = Object.keys(budget).map(kat => {
     const batas = budget[kat];
     const terpakai = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori === kat).reduce((s,t) => s+t.jumlah, 0);
     const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
-    const status = terpakai > batas ? '⚠ Melebihi' : persen >= 80 ? '⚡ Hampir' : '✓ Aman';
+    const status = terpakai > batas ? 'Melebihi' : persen >= 80 ? 'Hampir Batas' : 'Aman';
     return [kat, formatRupiah(terpakai), formatRupiah(batas), persen + '%', status];
   });
 
   if (anggaranRows.length > 0) {
+    y = checkNewPage(y, 30);
+    y = addSectionTitle('REALISASI ANGGARAN', y);
     doc.autoTable({
       startY: y,
-      head: [['Kategori', 'Terpakai', 'Anggaran', '%', 'Status']],
+      head: [['Kategori', 'Terpakai', 'Anggaran', 'Persentase', 'Status']],
       body: anggaranRows,
       theme: 'striped',
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 35, halign: 'right' },
+        2: { cellWidth: 35, halign: 'right' },
+        3: { cellWidth: 25, halign: 'center' },
+        4: { cellWidth: 37, halign: 'center' }
+      },
       margin: { left: margin, right: margin }
     });
-    y = doc.lastAutoTable.finalY + 10;
+    y = doc.lastAutoTable.finalY + 8;
   }
 
   // ======= TRANSAKSI =======
-  if (y > 220) { doc.addPage(); y = 20; }
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`RIWAYAT TRANSAKSI (${txBulanIni.length} transaksi)`, margin, y);
-  y += 2;
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
-  const txRows = txBulanIni.map(t => {
+  const txRows_data = txBulanIni.map(t => {
     const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     const sign = t.tipe === 'masuk' ? '+' : '-';
-    const keterangan = hapusEmoji(t.keterangan);
-    return [tgl, keterangan.slice(0, 30), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
+    return [tgl, hapusEmoji(t.keterangan).slice(0, 35), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
   });
-  if (txRows.length > 0) {
+  
+  if (txRows_data.length > 0) {
+    y = checkNewPage(y, 30);
+    y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI (' + txBulanIni.length + ' transaksi)', y);
+  }
+
+
+  if (txRows_data.length > 0) {
     doc.autoTable({
       startY: y,
-      head: [['Tgl', 'Keterangan', 'Kategori', 'Metode', 'Jumlah']],
-      body: txRows,
+      head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
+      body: txRows_data,
       theme: 'striped',
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-  0: { cellWidth: 14 },
-  1: { cellWidth: 60 },
-  2: { cellWidth: 28 },
-  3: { cellWidth: 20 },
-  4: { cellWidth: 30, halign: 'right' }
-},
+        0: { cellWidth: 18 },
+        1: { cellWidth: 65 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 47, halign: 'right' }
+      },
       margin: { left: margin, right: margin }
     });
-    y = doc.lastAutoTable.finalY + 10;
+    y = doc.lastAutoTable.finalY + 8;
   }
 
   // ======= HUTANG PIUTANG =======
   const hpAktif = hpData.filter(h => (h.jumlah - (h.terbayar || 0)) > 0);
   if (hpAktif.length > 0) {
-    if (y > 220) { doc.addPage(); y = 20; }
-
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HUTANG & PIUTANG AKTIF', margin, y);
-    y += 2;
-    doc.line(margin, y, pageW - margin, y);
-    y += 6;
+    y = checkNewPage(y, 30);
+    y = addSectionTitle('HUTANG & PIUTANG AKTIF', y);
 
     const hpRows = hpAktif.map(h => {
-  const sisa = h.jumlah - (h.terbayar || 0);
-  const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-  const ket = h.keterangan ? hapusEmoji(h.keterangan) : (h.tipe === 'piutang' ? 'Piutang kepada ' + hapusEmoji(h.nama) : 'Hutang kepada ' + hapusEmoji(h.nama));
-  return [h.tipe === 'piutang' ? 'Piutang' : 'Hutang', hapusEmoji(h.nama), ket, tgl, formatRupiah(h.jumlah), formatRupiah(h.terbayar || 0), formatRupiah(sisa)];
-});
+      const sisa = h.jumlah - (h.terbayar || 0);
+      const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      const ket = h.keterangan ? hapusEmoji(h.keterangan) : (h.tipe === 'piutang' ? 'Piutang kepada ' + hapusEmoji(h.nama) : 'Hutang kepada ' + hapusEmoji(h.nama));
+      return [
+        h.tipe === 'piutang' ? 'Piutang' : 'Hutang',
+        hapusEmoji(h.nama),
+        ket,
+        tgl,
+        formatRupiah(h.jumlah),
+        formatRupiah(h.terbayar || 0),
+        formatRupiah(sisa)
+      ];
+    });
 
-doc.autoTable({
-  startY: y,
-  head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Total', 'Terbayar', 'Sisa']],
-  body: hpRows,
-  theme: 'striped',
-  headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-  styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-  margin: { left: margin, right: margin }
-});
-    y = doc.lastAutoTable.finalY + 10;
+    doc.autoTable({
+      startY: y,
+      head: [['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Total', 'Terbayar', 'Sisa']],
+      body: hpRows,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 18 },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 27, halign: 'right' },
+        5: { cellWidth: 27, halign: 'right' },
+        6: { cellWidth: 27, halign: 'right' }
+      },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 8;
   }
 
-// ======= TARGET =======
-if (targetData.length > 0) {
-  if (y > 220) { doc.addPage(); y = 20; }
+  // ======= TARGET =======
+  if (targetData.length > 0) {
+    y = checkNewPage(y, 30);
+    y = addSectionTitle('TARGET KEUANGAN', y);
 
-  doc.setTextColor(100, 116, 139);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('TARGET KEUANGAN', margin, y);
-  y += 2;
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
+    const targetRows = targetData.map(tgt => {
+      const terkumpul = tgt.terkumpul || 0;
+      const sisa = tgt.jumlah - terkumpul;
+      const persen = tgt.jumlah > 0 ? ((terkumpul / tgt.jumlah) * 100).toFixed(1) : 0;
+      const status = sisa <= 0 ? 'Tercapai' : persen >= 75 ? 'Hampir' : 'Dalam Proses';
+      return [
+        hapusEmoji(tgt.nama),
+        formatRupiah(tgt.jumlah),
+        formatRupiah(terkumpul),
+        formatRupiah(sisa),
+        persen + '%',
+        tgt.deadline || '-',
+        status
+      ];
+    });
 
-  const targetRows = targetData.map(tgt => {
-    const terkumpul = tgt.terkumpul || 0;
-    const sisa = tgt.jumlah - terkumpul;
-    const persen = tgt.jumlah > 0 ? ((terkumpul / tgt.jumlah) * 100).toFixed(1) : 0;
-    const status = sisa <= 0 ? 'Tercapai' : persen >= 75 ? 'Hampir' : 'Dalam proses';
-    return [
-      hapusEmoji(tgt.nama),
-      formatRupiah(tgt.jumlah),
-      formatRupiah(terkumpul),
-      formatRupiah(sisa),
-      persen + '%',
-      tgt.deadline || '-',
-      status
-    ];
-  });
-
-  doc.autoTable({
-    startY: y,
-    head: [['Nama Target', 'Target', 'Terkumpul', 'Sisa', '%', 'Deadline', 'Status']],
-    body: targetRows,
-    theme: 'striped',
-    headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9 },
-    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-    margin: { left: margin, right: margin }
-  });
-  y = doc.lastAutoTable.finalY + 10;
-}
+    doc.autoTable({
+      startY: y,
+      head: [['Nama Target', 'Target', 'Terkumpul', 'Sisa', '%', 'Deadline', 'Status']],
+      body: targetRows,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 27, halign: 'right' },
+        2: { cellWidth: 27, halign: 'right' },
+        3: { cellWidth: 27, halign: 'right' },
+        4: { cellWidth: 13, halign: 'center' },
+        5: { cellWidth: 22, halign: 'center' },
+        6: { cellWidth: 26, halign: 'center' }
+      },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
 
   // ======= FOOTER =======
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    const footerY = doc.internal.pageSize.getHeight() - 10;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(0, footerY - 6, pageW, 16, 'F');
-    doc.setTextColor(148, 163, 184);
+    const footerY = pageH - 8;
+    doc.setFillColor(99, 102, 241);
+    doc.rect(0, footerY - 5, pageW, 15, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('* Kerta · Laporan otomatis', margin, footerY);
-    doc.text(`Halaman ${i} dari ${pageCount}`, pageW - margin, footerY, { align: 'right' });
+    doc.text('KERTA · Laporan Keuangan Otomatis', margin, footerY);
+    doc.text('Halaman ' + i + ' dari ' + pageCount, pageW - margin, footerY, { align: 'right' });
   }
 
-  // Download PDF
-  doc.save(`laporan-kerta-${bulanIni}.pdf`);
+  doc.save('laporan-kerta-' + bulanIni + '.pdf');
   toggleMenu();
-}
-function toggleHistori(id) {
-  const el = document.getElementById(id);
-  const key = id.replace('histori-', '');
-  const icon = document.getElementById('icon-' + key);
-  if (!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  if (icon) icon.textContent = isOpen ? '▼' : '▲';
 }
 
 function aturSaldoAwal() {
