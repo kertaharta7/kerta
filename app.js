@@ -1558,9 +1558,9 @@ if (txRows_data.length > 0) {
       columnStyles: {
   0: { cellWidth: 16 },
   1: { cellWidth: 20 },
-  2: { cellWidth: 45 },
+  2: { cellWidth: 44 },
   3: { cellWidth: 20 },
-  4: { cellWidth: 25, halign: 'right' },
+  4: { cellWidth: 24, halign: 'right' },
   5: { cellWidth: 25, halign: 'right' },
   6: { cellWidth: 22, halign: 'right' }
 },
