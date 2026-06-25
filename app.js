@@ -1490,7 +1490,23 @@ function generatePDF() {
   }
 
   // ======= TRANSAKSI =======
-    doc.autoTable({
+const txRows_data = txBulanIni.map(t => {
+  const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+  const prefix = t.tipe === 'masuk' ? '+' : t.tipe === 'keluar' ? '-' : '⇄';
+  const warna = t.tipe === 'masuk' ? [22, 163, 74] : t.tipe === 'keluar' ? [220, 38, 38] : [99, 102, 241];
+  return [
+    tgl,
+    t.keterangan || '-',
+    t.kategori || '-',
+    t.rekening || '-',
+    { content: prefix + formatRupiah(t.jumlah), styles: { textColor: warna, halign: 'right' } }
+  ];
+});
+
+if (txRows_data.length > 0) {
+  y = checkNewPage(y, 30);
+  y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI', y);
+  doc.autoTable({
     startY: y,
     head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
     body: txRows_data,
