@@ -1490,36 +1490,33 @@ function generatePDF() {
   }
 
   // ======= TRANSAKSI =======
-  if (txRows_data.length > 0) {
-    y = checkNewPage(y, 30);
-    y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI (' + txBulanIni.length + ' transaksi)', y);
-  }
-
   const txRows_data = txBulanIni.map(t => {
-    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-    const sign = t.tipe === 'masuk' ? '+' : '-';
-    return [tgl, hapusEmoji(t.keterangan).slice(0, 35), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
-  });
+  const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const sign = t.tipe === 'masuk' ? '+' : '-';
+  return [tgl, hapusEmoji(t.keterangan).slice(0, 35), t.kategori, t.metode, sign + formatRupiah(t.jumlah)];
+});
 
-  if (txRows_data.length > 0) {
-    doc.autoTable({
-      startY: y,
-      head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
-      body: txRows_data,
-      theme: 'striped',
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
-      styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
-      columnStyles: {
-        0: { cellWidth: 18 },
-        1: { cellWidth: 65 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 47, halign: 'right' }
-      },
-      margin: { left: margin, right: margin }
-    });
-    y = doc.lastAutoTable.finalY + 8;
-  }
+if (txRows_data.length > 0) {
+  y = checkNewPage(y, 30);
+  y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI (' + txBulanIni.length + ' transaksi)', y);
+  doc.autoTable({
+    startY: y,
+    head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
+    body: txRows_data,
+    theme: 'striped',
+    headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+    styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
+    columnStyles: {
+      0: { cellWidth: 16 },
+      1: { cellWidth: 58 },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 40, halign: 'right' }
+    },
+    margin: { left: margin, right: margin }
+  });
+  y = doc.lastAutoTable.finalY + 8;
+}
 
   // ======= HUTANG PIUTANG =======
   const hpAktif = hpData.filter(h => (h.jumlah - (h.terbayar || 0)) > 0);
