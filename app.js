@@ -1559,7 +1559,7 @@ if (txRows_data.length > 0) {
   0: { cellWidth: 16 },
   1: { cellWidth: 24 },
   2: { cellWidth: 46 },
-  3: { cellWidth: 20 },
+  3: { cellWidth: 24 },
   4: { cellWidth: 24, halign: 'right' },
   5: { cellWidth: 25, halign: 'right' },
   6: { cellWidth: 22, halign: 'right' }
