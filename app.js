@@ -1556,7 +1556,7 @@ if (txRows_data.length > 0) {
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-  0: { cellWidth: 12 },
+  0: { cellWidth: 16 },
   1: { cellWidth: 22 },
   2: { cellWidth: 46 },
   3: { cellWidth: 22 },
