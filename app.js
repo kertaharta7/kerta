@@ -1557,12 +1557,12 @@ if (txRows_data.length > 0) {
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
   0: { cellWidth: 16 },
-  1: { cellWidth: 23 },
+  1: { cellWidth: 20 },
   2: { cellWidth: 45 },
-  3: { cellWidth: 23 },
+  3: { cellWidth: 20 },
   4: { cellWidth: 25, halign: 'right' },
   5: { cellWidth: 25, halign: 'right' },
-  6: { cellWidth: 25, halign: 'right' }
+  6: { cellWidth: 22, halign: 'right' }
 },
       margin: { left: margin, right: margin }
     });
