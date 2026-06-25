@@ -1490,10 +1490,7 @@ function generatePDF() {
   }
 
   // ======= TRANSAKSI =======
-  if (txRows_data.length > 0) {
-  y = checkNewPage(y, 30);
-  y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI (' + txBulanIni.length + ' transaksi)', y);
-  doc.autoTable({
+    doc.autoTable({
     startY: y,
     head: [['Tanggal', 'Keterangan', 'Kategori', 'Rekening', 'Jumlah']],
     body: txRows_data,
