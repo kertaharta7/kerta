@@ -195,6 +195,8 @@ function gotoTab(tabId, el) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
   el.classList.add('active');
+  const filterBar = document.getElementById('dashboard-filter-bar');
+  if (filterBar) filterBar.style.display = tabId === 'ringkasan' ? 'flex' : 'none';
   if (tabId === 'grafik') renderGrafikAll();
 }
 
@@ -219,17 +221,14 @@ function setFilterType(type, el) {
 
 function setFilterDashboard(type, el) {
   filterDashboardType = type;
-  document.querySelectorAll('.filter-type-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  document.getElementById('dbf-btn-bulan').style.background = type === 'bulan' ? '#6366f1' : 'white';
+  document.getElementById('dbf-btn-bulan').style.color = type === 'bulan' ? 'white' : '#64748b';
+  document.getElementById('dbf-btn-tahun').style.background = type === 'tahun' ? '#6366f1' : 'white';
+  document.getElementById('dbf-btn-tahun').style.color = type === 'tahun' ? 'white' : '#64748b';
   const elBulan = document.getElementById('dashboard-filter-bulan');
   const elTahun = document.getElementById('dashboard-filter-tahun');
-  if (type === 'bulan') {
-    elBulan.style.display = 'block';
-    elTahun.style.display = 'none';
-  } else {
-    elBulan.style.display = 'none';
-    elTahun.style.display = 'block';
-  }
+  if (type === 'bulan') { elBulan.style.display = 'block'; elTahun.style.display = 'none'; }
+  else { elBulan.style.display = 'none'; elTahun.style.display = 'block'; }
   renderDashboard();
 }
 
