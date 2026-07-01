@@ -354,6 +354,8 @@ function renderDashboard() {
 
   // Re-render grafik donut sesuai periode
   renderGrafikDonutPeriode(txFiltered);
+  renderGrafikPengeluaranHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
+renderGrafikSaldoHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
 }
 
 function renderGrafikDonutPeriode(txFiltered) {
@@ -373,6 +375,113 @@ function renderGrafikDonutPeriode(txFiltered) {
   if (grafikDonutInstance) grafikDonutInstance.destroy();
   grafikDonutInstance = new Chart(ctx, { type: 'doughnut', data: { labels: top5.map(x=>x[0]), datasets: [{ data: top5.map(x=>x[1]), backgroundColor: warna, borderWidth: 2, borderColor: 'white' }] }, options: { responsive: true, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${formatRupiah(c.raw)}` } } } }, plugins: [{ id: 'centerText', beforeDraw(chart) { const { width, height, ctx } = chart; ctx.save(); ctx.font = `bold ${Math.min(width,height)*0.1}px Inter`; ctx.fillStyle = '#1e293b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Total', width/2, height/2 - 10); ctx.font = `bold ${Math.min(width,height)*0.09}px Inter`; ctx.fillStyle = '#6366f1'; const totalStr = total >= 1000000 ? 'Rp '+(total/1000000).toFixed(1)+'jt' : formatRupiah(total); ctx.fillText(totalStr, width/2, height/2 + 12); ctx.restore(); } }] });
   if (legend) { legend.innerHTML = top5.map((x,i) => { const persen = total > 0 ? ((x[1]/total)*100).toFixed(0) : 0; return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:${warna[i]};flex-shrink:0"></div><span style="color:#475569">${x[0]}</span></div><div style="text-align:right"><span style="font-weight:600;color:#1e293b">${persen}%</span><div style="color:#94a3b8;font-size:11px">${formatRupiah(x[1])}</div></div></div>`; }).join(''); }
+}
+
+function renderGrafikPengeluaranHarianPeriode(txFiltered, periode, tipe) {
+  const ctx = document.getElementById('grafikPengeluaranHarian');
+  if (!ctx) return;
+
+  let labels = [];
+  let dataPoints = [];
+
+  if (tipe === 'bulan') {
+    const tahun = parseInt(periode.slice(0, 4));
+    const bulan = parseInt(periode.slice(5, 7)) - 1;
+    const hariDalam = new Date(tahun, bulan + 1, 0).getDate();
+    for (let i = 1; i <= hariDalam; i++) {
+      const tgl = `${periode}-${String(i).padStart(2, '0')}`;
+      labels.push(i);
+      dataPoints.push(txFiltered.filter(t => t.tanggal === tgl && t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s, t) => s + t.jumlah, 0));
+    }
+  } else {
+    // Per tahun: tampilkan per bulan
+    for (let b = 1; b <= 12; b++) {
+      const bulanStr = `${periode}-${String(b).padStart(2, '0')}`;
+      labels.push(new Date(periode, b - 1).toLocaleDateString('id-ID', { month: 'short' }));
+      dataPoints.push(txFiltered.filter(t => t.tanggal.slice(0, 7) === bulanStr && t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s, t) => s + t.jumlah, 0));
+    }
+  }
+
+  if (grafikPengeluaranHarianInstance) grafikPengeluaranHarianInstance.destroy();
+  grafikPengeluaranHarianInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ data: dataPoints, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6366f1', pointHoverRadius: 5, fill: true, tension: 0.4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
+        y: { grid: { color: '#f8fafc' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'jt' : v >= 1000 ? (v/1000).toFixed(0)+'rb' : v } }
+      }
+    }
+  });
+}
+
+function renderGrafikSaldoHarianPeriode(txFiltered, periode, tipe) {
+  const ctx = document.getElementById('grafikSaldoHarian');
+  if (!ctx) return;
+
+  let labels = [];
+  let saldoData = [];
+  const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
+
+  if (tipe === 'bulan') {
+    const tahun = parseInt(periode.slice(0, 4));
+    const bulan = parseInt(periode.slice(5, 7)) - 1;
+    const hariDalam = new Date(tahun, bulan + 1, 0).getDate();
+
+    // Hitung saldo sebelum periode ini
+    let saldoAwal2 = totalSaldoAwal;
+    transaksi.filter(t => t.tanggal < `${periode}-01` && t.kategori !== 'Transfer').forEach(t => {
+      saldoAwal2 += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+    });
+
+    let kumulatif = saldoAwal2;
+    for (let i = 1; i <= hariDalam; i++) {
+      const tgl = `${periode}-${String(i).padStart(2, '0')}`;
+      txFiltered.filter(t => t.tanggal === tgl && t.kategori !== 'Transfer').forEach(t => {
+        kumulatif += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+      });
+      labels.push(i);
+      saldoData.push(kumulatif);
+    }
+  } else {
+    // Per tahun: per bulan
+    let saldoAwal2 = totalSaldoAwal;
+    transaksi.filter(t => t.tanggal < `${periode}-01-01` && t.kategori !== 'Transfer').forEach(t => {
+      saldoAwal2 += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+    });
+
+    let kumulatif = saldoAwal2;
+    for (let b = 1; b <= 12; b++) {
+      const bulanStr = `${periode}-${String(b).padStart(2, '0')}`;
+      txFiltered.filter(t => t.tanggal.slice(0, 7) === bulanStr && t.kategori !== 'Transfer').forEach(t => {
+        kumulatif += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
+      });
+      labels.push(new Date(periode, b - 1).toLocaleDateString('id-ID', { month: 'short' }));
+      saldoData.push(kumulatif);
+    }
+  }
+
+  if (grafikSaldoHarianInstance) grafikSaldoHarianInstance.destroy();
+  grafikSaldoHarianInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ data: saldoData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: true, tension: 0.4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+' jt' : v >= 1000 ? (v/1000).toFixed(0)+' rb' : v } }
+      }
+    }
+  });
 }
 
 // ======= TRANSAKSI =======
@@ -1960,3 +2069,5 @@ window.toggleHistoriTarget = toggleHistoriTarget;
 window.exportExcel = exportExcel;
 window.setFilterDashboard = setFilterDashboard;
 window.renderDashboard = renderDashboard;
+window.renderGrafikPengeluaranHarianPeriode = renderGrafikPengeluaranHarianPeriode;
+window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
