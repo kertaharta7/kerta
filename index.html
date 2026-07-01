@@ -67,6 +67,7 @@
       <button class="nav-tab" onclick="gotoTab('target', this)">Target</button>
       <button class="nav-tab" onclick="gotoTab('pengaturan', this)">⚙️ Pengaturan</button>
     </div>
+    <div id="dashboard-filter-bar" style="...">...</div>
     <div class="topbar-actions">
       <div class="topbar-menu">
         <button class="btn-menu" onclick="toggleMenu()">⋯</button>
@@ -90,17 +91,25 @@
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
 
-<!-- FILTER PERIODE -->
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <div class="filter-type-toggle">
-      <button class="filter-type-btn active" onclick="setFilterDashboard('bulan', this)">Per Bulan</button>
-      <button class="filter-type-btn" onclick="setFilterDashboard('tahun', this)">Per Tahun</button>
-    </div>
-    <select id="dashboard-filter-bulan" onchange="renderDashboard()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px">
-    </select>
-    <select id="dashboard-filter-tahun" onchange="renderDashboard()" style="display:none;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px">
-    </select>
+<!-- FILTER PERIODE — ditampilkan via JS saat tab Dashboard aktif -->
+<div id="dashboard-filter-bar" style="display:none;align-items:center;gap:6px">
+  <div style="display:flex;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+    <button id="dbf-btn-bulan" onclick="setFilterDashboard('bulan', this)"
+      style="padding:5px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:#6366f1;color:white">
+      Bulan
+    </button>
+    <button id="dbf-btn-tahun" onclick="setFilterDashboard('tahun', this)"
+      style="padding:5px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:white;color:#64748b">
+      Tahun
+    </button>
   </div>
+  <select id="dashboard-filter-bulan" onchange="renderDashboard()"
+    style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:12px">
+  </select>
+  <select id="dashboard-filter-tahun" onchange="renderDashboard()"
+    style="display:none;padding:5px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:12px">
+  </select>
+</div>
 
     <!-- BARIS 1 - HERO SALDO -->
     <div class="hero-saldo">
