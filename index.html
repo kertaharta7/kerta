@@ -59,7 +59,7 @@
   <div class="topbar">
     <span class="logo">✦ Kerta</span>
     <div class="nav-tabs">
-      <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Ringkasan</button>
+      <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Dashboard</button>
       <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
       <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
       <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
@@ -89,6 +89,18 @@
 
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
+
+<!-- FILTER PERIODE -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <div class="filter-type-toggle">
+      <button class="filter-type-btn active" onclick="setFilterDashboard('bulan', this)">Per Bulan</button>
+      <button class="filter-type-btn" onclick="setFilterDashboard('tahun', this)">Per Tahun</button>
+    </div>
+    <select id="dashboard-filter-bulan" onchange="renderDashboard()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px">
+    </select>
+    <select id="dashboard-filter-tahun" onchange="renderDashboard()" style="display:none;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:'Inter',sans-serif;font-size:13px">
+    </select>
+  </div>
 
     <!-- BARIS 1 - HERO SALDO -->
     <div class="hero-saldo">
