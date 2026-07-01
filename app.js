@@ -197,6 +197,7 @@ function gotoTab(tabId, el) {
   el.classList.add('active');
   const filterBar = document.getElementById('dashboard-filter-bar');
   if (filterBar) filterBar.style.display = tabId === 'ringkasan' ? 'flex' : 'none';
+  if (tabId === 'ringkasan') renderDashboard();
   if (tabId === 'grafik') renderGrafikAll();
 }
 
