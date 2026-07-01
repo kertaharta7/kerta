@@ -82,6 +82,8 @@ onAuthStateChanged(auth, (user) => {
     updateModeUI();
     mulaiListeners();
     document.getElementById('tanggal').valueAsDate = new Date();
+    const filterBar = document.getElementById('dashboard-filter-bar');
+if (filterBar) filterBar.style.display = 'flex';
   } else {
     currentUser = null;
     document.getElementById('halaman-login').style.display = 'flex';
