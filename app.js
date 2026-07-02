@@ -18,7 +18,7 @@ const auth = getAuth(firebaseApp);
 
 let currentUser = null;
 
-// Referensi database — berubah sesuai mode
+// Referensi database
 let transaksiRef, budgetRef, hpRef, targetRef;
 
 function updateRefs() {
@@ -27,7 +27,7 @@ function updateRefs() {
   hpRef = ref(db, 'hutangpiutang');
   targetRef = ref(db, 'target');
   pengaturanRef = ref(db, 'pengaturan');
-  saldoAwalRef = ref(db, 'saldoAwal'); // ← tambah ini
+  saldoAwalRef = ref(db, 'saldoAwal');
 }
 
 let transaksi = [];
@@ -63,7 +63,6 @@ let saldoAwal = {};
 const metodeList = ['Cash', 'BNI', 'BSI', 'DANA', 'OVO', 'SeaBank', 'GoPay'];
 
 // ======= AUTH =======
-// Tampilkan loading saat pertama buka
 document.getElementById('loading-screen').style.display = 'flex';
 
 onAuthStateChanged(auth, (user) => {
@@ -108,6 +107,7 @@ function mulaiListeners() {
     budget = snapshot.val() || {};
     renderBudget();
     renderInsight();
+    renderDashboard();
   });
 
   const l3 = onValue(hpRef, (snapshot) => {
@@ -139,6 +139,7 @@ function mulaiListeners() {
   saldoAwal = snapshot.val() || {};
   render();
   renderRekeningList();
+  renderDashboard();
 });
 
   listenerRefs = [
@@ -147,7 +148,7 @@ function mulaiListeners() {
   { ref: hpRef, fn: l3 },
   { ref: targetRef, fn: l4 },
   { ref: pengaturanRef, fn: l5 },
-  { ref: saldoAwalRef, fn: l6 }, // ← tambah ini
+  { ref: saldoAwalRef, fn: l6 },
 ];
   
 }
@@ -205,7 +206,6 @@ function renderDashboard() {
   const elBulan = document.getElementById('dashboard-filter-bulan');
   const elTahun = document.getElementById('dashboard-filter-tahun');
 
-  // Isi opsi bulan
   const semuaBulan = [...new Set(transaksi.map(t => t.tanggal.slice(0, 7)))].sort().reverse();
   const dipilihBulan = elBulan ? elBulan.value || semuaBulan[0] || new Date().toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7);
   if (elBulan) {
@@ -216,14 +216,12 @@ function renderDashboard() {
     }).join('');
   }
 
-  // Isi opsi tahun
   const semuaTahun = [...new Set(transaksi.map(t => t.tanggal.slice(0, 4)))].sort().reverse();
   const dipilihTahun = elTahun ? elTahun.value || semuaTahun[0] || new Date().getFullYear().toString() : new Date().getFullYear().toString();
   if (elTahun) {
     elTahun.innerHTML = semuaTahun.map(th => `<option value="${th}" ${dipilihTahun === th ? 'selected' : ''}>${th}</option>`).join('');
   }
 
-  // Filter transaksi sesuai periode
   let txFiltered;
   if (filterDashboardType === 'bulan') {
     txFiltered = transaksi.filter(t => t.tanggal.slice(0, 7) === dipilihBulan);
@@ -233,22 +231,57 @@ function renderDashboard() {
     filterDashboardPeriode = dipilihTahun;
   }
 
-  // Hitung nilai
   const totalMasuk = txFiltered.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = txFiltered.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+
+  // Saldo dihitung sampai akhir periode yang dipilih, bukan real-time all-time
+  let batasTanggalPeriode;
+  if (filterDashboardType === 'bulan') {
+    const [th, bl] = dipilihBulan.split('-');
+    batasTanggalPeriode = new Date(th, bl, 0).toISOString().slice(0, 10);
+  } else {
+    batasTanggalPeriode = `${dipilihTahun}-12-31`;
+  }
+  const txSampaiPeriode = transaksi.filter(t => t.tanggal <= batasTanggalPeriode && t.kategori !== 'Transfer');
+  const masukSampaiPeriode = txSampaiPeriode.filter(t => t.tipe === 'masuk').reduce((s,t) => s+t.jumlah, 0);
+  const keluarSampaiPeriode = txSampaiPeriode.filter(t => t.tipe === 'keluar').reduce((s,t) => s+t.jumlah, 0);
   const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
-  const saldo = totalSaldoAwal + allMasuk - allKeluar;
+  const saldo = totalSaldoAwal + masukSampaiPeriode - keluarSampaiPeriode;
+
   const cashflow = totalMasuk - totalKeluar;
   const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
   const hariDalamPeriode = filterDashboardType === 'bulan' ? new Date(dipilihBulan.slice(0,4), dipilihBulan.slice(5,7), 0).getDate() : 365;
 
-  // Update kartu ringkasan
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
   document.getElementById('saldo').style.color = saldo < 0 ? '#dc2626' : '#1e293b';
+
+  // Label kecil di bawah Saldo: kasih tahu ini saldo per kapan
+  let labelSaldoPeriode = document.getElementById('label-saldo-periode');
+  if (!labelSaldoPeriode) {
+    labelSaldoPeriode = document.createElement('div');
+    labelSaldoPeriode.id = 'label-saldo-periode';
+    labelSaldoPeriode.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:4px';
+    const elSaldo = document.getElementById('saldo');
+    if (elSaldo && elSaldo.parentNode) {
+      elSaldo.parentNode.insertBefore(labelSaldoPeriode, elSaldo.nextSibling);
+    }
+  }
+  if (labelSaldoPeriode) {
+    const now = new Date();
+    const iniBulanSekarang = filterDashboardType === 'bulan' && dipilihBulan === now.toISOString().slice(0, 7);
+    const iniTahunSekarang = filterDashboardType === 'tahun' && dipilihTahun === now.getFullYear().toString();
+    if (iniBulanSekarang || iniTahunSekarang) {
+      labelSaldoPeriode.textContent = 'Saldo saat ini';
+    } else if (filterDashboardType === 'bulan') {
+      const [th, bl] = dipilihBulan.split('-');
+      const labelBulan = new Date(th, bl - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      labelSaldoPeriode.textContent = `Saldo per akhir ${labelBulan}`;
+    } else {
+      labelSaldoPeriode.textContent = `Saldo per akhir ${dipilihTahun}`;
+    }
+  }
 
   const elAvgMasuk = document.getElementById('avg-masuk');
   const elAvgKeluar = document.getElementById('avg-keluar');
@@ -272,10 +305,7 @@ function renderDashboard() {
   }
   if (elSavingStatus) { elSavingStatus.textContent = savingRate >= 20 ? 'Tercapai ✓' : 'Belum Tercapai'; elSavingStatus.style.color = savingRate >= 20 ? '#16a34a' : '#dc2626'; }
 
-  // Update budget mini sesuai periode
-  const bulanIni = new Date().toISOString().slice(0, 7);
-  const periodeFilter = filterDashboardType === 'bulan' ? dipilihBulan : null;
-    // Update kartu "Sisa Anggaran Bulan Ini" — ikut periode filter, bukan bulan kalender asli
+  // Kartu Sisa Anggaran — ikut periode filter
   const totalAnggaranPeriode = Object.values(budget).reduce((s, v) => s + v, 0);
   const totalTerpakaiPeriode = txFiltered.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s, t) => s + t.jumlah, 0);
   const totalSisaPeriode = totalAnggaranPeriode - totalTerpakaiPeriode;
@@ -289,6 +319,9 @@ function renderDashboard() {
   const elSisaTab = document.getElementById('sisa-anggaran-tab');
   if (elAnggaranTab) elAnggaranTab.textContent = formatRupiah(totalAnggaranPeriode);
   if (elSisaTab) { elSisaTab.textContent = formatRupiah(Math.abs(totalSisaPeriode)); elSisaTab.style.color = totalSisaPeriode < 0 ? '#dc2626' : '#1e293b'; }
+
+  const bulanIni = new Date().toISOString().slice(0, 7);
+  const periodeFilter = filterDashboardType === 'bulan' ? dipilihBulan : null;
   const budgetMini = document.getElementById('budget-mini');
   if (budgetMini) {
     const keys = Object.keys(budget);
@@ -304,7 +337,6 @@ function renderDashboard() {
     }
   }
 
-  // Update transaksi mini
   const mini = document.getElementById('list-transaksi-mini');
   const ikonKategori = {
     Gaji:'💼', Usaha:'🏪', Investasi:'📈', Piutang:'💰', Tabungan:'🏦', LAG:'🏠',
@@ -335,7 +367,6 @@ function renderDashboard() {
     }).join('');
   }
 
-  // Re-render grafik donut sesuai periode
   renderGrafikDonutPeriode(txFiltered);
   renderGrafikPengeluaranHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
 renderGrafikSaldoHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
@@ -350,11 +381,13 @@ function renderGrafikDonutPeriode(txFiltered) {
   const kategoriMap = {};
   txKeluar.forEach(t => { kategoriMap[t.kategori] = (kategoriMap[t.kategori]||0) + t.jumlah; });
   const sorted = Object.entries(kategoriMap).sort((a,b) => b[1]-a[1]);
+
   if (sorted.length === 0) {
     if (grafikDonutInstance) { grafikDonutInstance.destroy(); grafikDonutInstance = null; }
     if (legend) legend.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada pengeluaran di periode ini.</p>';
     return;
   }
+
   const top5 = sorted.slice(0, 5);
   const lainnya = sorted.slice(5).reduce((s,x) => s+x[1], 0);
   if (lainnya > 0) top5.push(['Lainnya', lainnya]);
@@ -381,7 +414,6 @@ function renderGrafikPengeluaranHarianPeriode(txFiltered, periode, tipe) {
       dataPoints.push(txFiltered.filter(t => t.tanggal === tgl && t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s, t) => s + t.jumlah, 0));
     }
   } else {
-    // Per tahun: tampilkan per bulan
     for (let b = 1; b <= 12; b++) {
       const bulanStr = `${periode}-${String(b).padStart(2, '0')}`;
       labels.push(new Date(periode, b - 1).toLocaleDateString('id-ID', { month: 'short' }));
@@ -420,7 +452,6 @@ function renderGrafikSaldoHarianPeriode(txFiltered, periode, tipe) {
     const bulan = parseInt(periode.slice(5, 7)) - 1;
     const hariDalam = new Date(tahun, bulan + 1, 0).getDate();
 
-    // Hitung saldo sebelum periode ini
     let saldoAwal2 = totalSaldoAwal;
     transaksi.filter(t => t.tanggal < `${periode}-01` && t.kategori !== 'Transfer').forEach(t => {
       saldoAwal2 += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
@@ -436,7 +467,6 @@ function renderGrafikSaldoHarianPeriode(txFiltered, periode, tipe) {
       saldoData.push(kumulatif);
     }
   } else {
-    // Per tahun: per bulan
     let saldoAwal2 = totalSaldoAwal;
     transaksi.filter(t => t.tanggal < `${periode}-01-01` && t.kategori !== 'Transfer').forEach(t => {
       saldoAwal2 += t.tipe === 'masuk' ? t.jumlah : -t.jumlah;
@@ -980,7 +1010,6 @@ function bukaCicilan(key, nama, sisa) {
   document.getElementById('cicilan-keterangan').value = '';
   document.getElementById('cicilan-tanggal').valueAsDate = new Date();
 
-  // Update pilihan metode pembayaran
   const metodeEl = document.getElementById('cicilan-metode');
   if (metodeEl) metodeEl.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
 
@@ -1005,11 +1034,9 @@ function simpanCicilan() {
   const hp = hpData.find(h => h._key === cicilanTargetKey);
   if (!hp) return;
 
-  // Update terbayar
   const terbayarBaru = (hp.terbayar || 0) + jumlah;
   set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), terbayarBaru);
 
-  // Simpan histori pembayaran ke Firebase
   const sisaSetelahBayar = hp.jumlah - terbayarBaru;
   push(ref(db, `hutangpiutang/${cicilanTargetKey}/histori`), {
     tanggal,
@@ -1019,7 +1046,6 @@ function simpanCicilan() {
     sisaSetelah: sisaSetelahBayar < 0 ? 0 : sisaSetelahBayar
   });
 
-  // Catat otomatis ke transaksi
   if (hp.tipe === 'hutang') {
     push(transaksiRef, {
       id: Date.now(),
@@ -1067,7 +1093,6 @@ function renderHP() {
   const tgl = new Date(h.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   const lunas = sisa <= 0;
 
-  // Render histori pembayaran
   const historiList = h.histori ? Object.values(h.histori) : [];
   historiList.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
   const historiHTML = historiList.length === 0
@@ -1107,7 +1132,6 @@ function renderHP() {
         </div>
       </div>
 
-      <!-- ACCORDION HISTORI -->
       <div style="margin-top:10px;border-top:1px solid #f1f5f9;padding-top:8px">
         <button onclick="toggleHistori('histori-${h._key}')"
           style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#6366f1;font-family:'Inter',sans-serif;padding:0;display:flex;justify-content:space-between;align-items:center">
@@ -1221,10 +1245,8 @@ function simpanDanaTarget() {
 
   const terkumpulBaru = (target.terkumpul || 0) + jumlah;
 
-  // Update terkumpul
   set(ref(db, `target/${targetDanaKey}/terkumpul`), terkumpulBaru);
 
-  // Simpan histori
   push(ref(db, `target/${targetDanaKey}/histori`), {
     tanggal,
     jumlah,
@@ -1234,7 +1256,6 @@ function simpanDanaTarget() {
     totalSetelah: terkumpulBaru > target.jumlah ? target.jumlah : terkumpulBaru
   });
 
-  // Catat sebagai transfer (keluar dari rekening asal, masuk ke rekening tujuan)
   push(transaksiRef, {
     id: Date.now(),
     tipe: 'keluar',
@@ -1333,7 +1354,6 @@ return `<div class="budget-item" style="background:white;border:1px solid #f1f5f
     </div>
   </div>
 
-  <!-- ACCORDION HISTORI -->
   <div style="margin-top:10px;border-top:1px solid #f1f5f9;padding-top:8px">
     <button onclick="toggleHistoriTarget('histori-target-${t._key}')"
       style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#6366f1;font-family:'Inter',sans-serif;padding:0;display:flex;justify-content:space-between;align-items:center">
@@ -1431,13 +1451,13 @@ async function aktifkanNotifikasi() {
 
 // ======= BACKUP & RESTORE =======
 function backupData() {
-  const data = { versi: '1.0', tanggalBackup: new Date().toISOString(), mode: modeAktif, transaksi, budget, hutangpiutang: hpData, target: targetData };
+  const data = { versi: '1.0', tanggalBackup: new Date().toISOString(), transaksi, budget, hutangpiutang: hpData, target: targetData };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const tgl = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `backup-kerta-${modeAktif}-${tgl}.json`;
+  a.download = `backup-kerta-${tgl}.json`;
   a.click();
   URL.revokeObjectURL(url);
   alert(`✅ Backup berhasil!`);
@@ -1513,7 +1533,6 @@ function tampilkanError(pesan) {
   }
 }
 
-// Deteksi koneksi internet
 window.addEventListener('online', () => {
   const banner = document.getElementById('error-banner');
   if (banner) banner.style.display = 'none';
@@ -1603,7 +1622,6 @@ function renderPengaturan() {
 }
 
 function updateFormOptions() {
-  // Update dropdown kategori di form transaksi
   const katEl = document.getElementById('kategori');
   if (katEl) {
     const list = tipeAktif === 'masuk' ? katMasuk : katKeluar;
@@ -1611,24 +1629,20 @@ function updateFormOptions() {
     katEl.innerHTML = list.map(k => `<option value="${k}" ${k === current ? 'selected' : ''}>${k}</option>`).join('');
   }
 
-  // Update dropdown metode di form transaksi
   const metodeEl = document.getElementById('metode');
   if (metodeEl) {
     const current = metodeEl.value;
     metodeEl.innerHTML = bankList.map(b => `<option value="${b}" ${b === current ? 'selected' : ''}>${b}</option>`).join('');
   }
 
-  // Update dropdown transfer
   const transferDari = document.getElementById('transfer-dari');
   const transferKe = document.getElementById('transfer-ke');
   if (transferDari) transferDari.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
   if (transferKe) transferKe.innerHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
 
-  // Update dropdown budget kategori
   const budgetKat = document.getElementById('budget-kat');
   if (budgetKat) budgetKat.innerHTML = katKeluar.map(k => `<option value="${k}">${k}</option>`).join('');
 
-  // Update metodeList global
   metodeList.length = 0;
   bankList.forEach(b => metodeList.push(b));
 }
@@ -1666,7 +1680,6 @@ function generatePDF() {
     return yPos;
   }
 
-  // ======= HEADER =======
   doc.setFillColor(99, 102, 241);
   doc.rect(0, 0, pageW, 28, 'F');
   doc.setTextColor(255, 255, 255);
@@ -1685,7 +1698,6 @@ function generatePDF() {
 
   let y = 36;
 
-  // ======= RINGKASAN =======
   const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
   const totalMasuk = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
   const totalKeluar = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
@@ -1719,7 +1731,6 @@ function generatePDF() {
   });
   y = doc.lastAutoTable.finalY + 8;
 
-  // ======= ANGGARAN =======
   const anggaranRows = Object.keys(budget).map(kat => {
     const batas = budget[kat];
     const terpakai = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori === kat).reduce((s,t) => s+t.jumlah, 0);
@@ -1750,7 +1761,6 @@ function generatePDF() {
     y = doc.lastAutoTable.finalY + 8;
   }
 
-  // ======= TRANSAKSI =======
 const txRows_data = txBulanIni.map(t => {
   const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
   const prefix = t.tipe === 'masuk' ? '+' : t.tipe === 'keluar' ? '-' : '⇄';
@@ -1788,7 +1798,6 @@ if (txRows_data.length > 0) {
   y = doc.lastAutoTable.finalY + 8;
 }
 
-  // ======= HUTANG PIUTANG =======
   const hpAktif = hpData.filter(h => (h.jumlah - (h.terbayar || 0)) > 0);
   if (hpAktif.length > 0) {
     y = checkNewPage(y, 30);
@@ -1830,7 +1839,6 @@ if (txRows_data.length > 0) {
     y = doc.lastAutoTable.finalY + 8;
   }
 
-  // ======= TARGET =======
   if (targetData.length > 0) {
     y = checkNewPage(y, 30);
     y = addSectionTitle('TARGET KEUANGAN', y);
@@ -1872,7 +1880,6 @@ if (txRows_data.length > 0) {
     y = doc.lastAutoTable.finalY + 8;
   }
 
-  // ======= FOOTER =======
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -1900,7 +1907,6 @@ function toggleHistori(id) {
 }
 
 function aturSaldoAwal() {
-  // Buat modal
   const existing = document.getElementById('modal-saldo-awal');
   if (existing) existing.remove();
 
@@ -1933,7 +1939,6 @@ function aturSaldoAwal() {
   `;
   document.body.appendChild(modal);
 
-  // Tutup modal kalau klik luar
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.remove();
   });
@@ -1962,7 +1967,6 @@ function toggleHistoriTarget(id) {
 function exportExcel() {
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Transaksi
   const txHeader = ['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Tipe', 'Jumlah'];
   const txRows = [...transaksi]
     .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
@@ -1977,7 +1981,6 @@ function exportExcel() {
   const wsTx = XLSX.utils.aoa_to_sheet([txHeader, ...txRows]);
   XLSX.utils.book_append_sheet(wb, wsTx, 'Transaksi');
 
-  // Sheet 2: Hutang Piutang
   const hpHeader = ['Jenis', 'Nama', 'Keterangan', 'Tanggal', 'Total', 'Terbayar', 'Sisa'];
   const hpRows = hpData.map(h => [
     h.tipe === 'piutang' ? 'Piutang' : 'Hutang',
@@ -1991,7 +1994,6 @@ function exportExcel() {
   const wsHP = XLSX.utils.aoa_to_sheet([hpHeader, ...hpRows]);
   XLSX.utils.book_append_sheet(wb, wsHP, 'Hutang Piutang');
 
-  // Sheet 3: Target
   const targetHeader = ['Nama', 'Target', 'Terkumpul', 'Sisa', 'Persen', 'Deadline'];
   const targetRows = targetData.map(tgt => [
   hapusEmoji(tgt.emoji + ' ' + tgt.nama),
