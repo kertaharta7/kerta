@@ -759,10 +759,14 @@ function editBudget(kat, nominal) {
   document.getElementById('budget-nominal').scrollIntoView({ behavior: 'smooth' });
 }
 
-function updateBudget(kat) {
+function updateBudget(katLama) {
+  const katBaru = document.getElementById('budget-kat').value;
   const nominal = parseFloat(document.getElementById('budget-nominal').value);
   if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
-  set(ref(db, `budget/${kat}`), nominal);
+  if (katBaru !== katLama) {
+    remove(ref(db, `budget/${katLama}`));
+  }
+  set(ref(db, `budget/${katBaru}`), nominal);
   const btn = document.getElementById('btn-simpan-budget');
   btn.textContent = 'Set Anggaran';
   btn.onclick = simpanBudget;
