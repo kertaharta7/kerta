@@ -16,16 +16,10 @@ const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
 
-// Mode: 'keluarga' atau 'pribadi'
-let modeAktif = localStorage.getItem('modeAktif') || 'keluarga';
 let currentUser = null;
 
 // Referensi database — berubah sesuai mode
 let transaksiRef, budgetRef, hpRef, targetRef;
-
-function getBasePath() {
-  return '';
-}
 
 function updateRefs() {
   transaksiRef = ref(db, 'transaksi');
@@ -79,7 +73,6 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('halaman-login').style.display = 'none';
     document.getElementById('aplikasi-utama').style.display = 'block';
     updateRefs();
-    updateModeUI();
     mulaiListeners();
     document.getElementById('tanggal').valueAsDate = new Date();
     const filterBar = document.getElementById('dashboard-filter-bar');
@@ -162,33 +155,6 @@ function mulaiListeners() {
 function hentikanListeners() {
   listenerRefs.forEach(({ ref: r }) => off(r));
   listenerRefs = [];
-}
-
-// ======= MODE SWITCH =======
-function gantiMode() {
-  modeAktif = modeAktif === 'keluarga' ? 'pribadi' : 'keluarga';
-  localStorage.setItem('modeAktif', modeAktif);
-  updateRefs();
-  updateModeUI();
-  mulaiListeners();
-
-  // Reset data lokal
-  transaksi = [];
-  budget = {};
-  hpData = [];
-  targetData = [];
-}
-
-function updateModeUI() {
-  const btn = document.getElementById('btn-mode');
-  if (!btn) return;
-  if (modeAktif === 'keluarga') {
-    btn.textContent = '🏠 Mode Keluarga';
-    btn.style.color = '#6366f1';
-  } else {
-    btn.textContent = '👤 Mode Pribadi';
-    btn.style.color = '#16a34a';
-  }
 }
 
 // ======= TAB =======
@@ -2060,7 +2026,6 @@ window.restoreData = restoreData;
 window.toggleMenu = toggleMenu;
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
-window.gantiMode = gantiMode;
 window.setFilterType = setFilterType;
 window.render = render;
 window.updateTarget = updateTarget;
