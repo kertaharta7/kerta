@@ -275,6 +275,20 @@ function renderDashboard() {
   // Update budget mini sesuai periode
   const bulanIni = new Date().toISOString().slice(0, 7);
   const periodeFilter = filterDashboardType === 'bulan' ? dipilihBulan : null;
+    // Update kartu "Sisa Anggaran Bulan Ini" — ikut periode filter, bukan bulan kalender asli
+  const totalAnggaranPeriode = Object.values(budget).reduce((s, v) => s + v, 0);
+  const totalTerpakaiPeriode = txFiltered.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s, t) => s + t.jumlah, 0);
+  const totalSisaPeriode = totalAnggaranPeriode - totalTerpakaiPeriode;
+
+  const elAnggaran = document.getElementById('total-anggaran');
+  const elSisa = document.getElementById('sisa-anggaran');
+  if (elAnggaran) elAnggaran.textContent = formatRupiah(totalAnggaranPeriode);
+  if (elSisa) { elSisa.textContent = formatRupiah(Math.abs(totalSisaPeriode)); elSisa.style.color = totalSisaPeriode < 0 ? '#dc2626' : '#1e293b'; }
+
+  const elAnggaranTab = document.getElementById('total-anggaran-tab');
+  const elSisaTab = document.getElementById('sisa-anggaran-tab');
+  if (elAnggaranTab) elAnggaranTab.textContent = formatRupiah(totalAnggaranPeriode);
+  if (elSisaTab) { elSisaTab.textContent = formatRupiah(Math.abs(totalSisaPeriode)); elSisaTab.style.color = totalSisaPeriode < 0 ? '#dc2626' : '#1e293b'; }
   const budgetMini = document.getElementById('budget-mini');
   if (budgetMini) {
     const keys = Object.keys(budget);
