@@ -370,7 +370,11 @@ function renderGrafikDonutPeriode(txFiltered) {
   const kategoriMap = {};
   txKeluar.forEach(t => { kategoriMap[t.kategori] = (kategoriMap[t.kategori]||0) + t.jumlah; });
   const sorted = Object.entries(kategoriMap).sort((a,b) => b[1]-a[1]);
-  if (sorted.length === 0) return;
+  if (sorted.length === 0) {
+    if (grafikDonutInstance) { grafikDonutInstance.destroy(); grafikDonutInstance = null; }
+    if (legend) legend.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada pengeluaran di periode ini.</p>';
+    return;
+  }
   const top5 = sorted.slice(0, 5);
   const lainnya = sorted.slice(5).reduce((s,x) => s+x[1], 0);
   if (lainnya > 0) top5.push(['Lainnya', lainnya]);
