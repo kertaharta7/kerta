@@ -1651,20 +1651,34 @@ function hapusEmoji(str) {
   if (!str) return '';
   return str.replace(/[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF]/g, '').trim();
 }
+
+function getPeriodeAktif() {
+  const elBulan = document.getElementById('dashboard-filter-bulan');
+  const elTahun = document.getElementById('dashboard-filter-tahun');
+  if (filterDashboardType === 'tahun') {
+    const periode = (elTahun && elTahun.value) || filterDashboardPeriode || new Date().getFullYear().toString();
+    return { tipe: 'tahun', periode };
+  } else {
+    const periode = (elBulan && elBulan.value) || filterDashboardPeriode || new Date().toISOString().slice(0, 7);
+    return { tipe: 'bulan', periode };
+  }
+}
+
 function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  // Tentukan periode & label sesuai filter Dashboard yang lagi dipilih
+  // Tentukan periode & label sesuai filter Dashboard yang lagi dipilih (baca langsung dari dropdown)
+  const aktif = getPeriodeAktif();
   let txPeriode, namaPeriode, fileTagPeriode, hariDalamPeriode;
-  if (filterDashboardType === 'tahun') {
-    const tahun = filterDashboardPeriode;
+  if (aktif.tipe === 'tahun') {
+    const tahun = aktif.periode;
     txPeriode = transaksi.filter(t => t.tanggal.slice(0, 4) === tahun);
     namaPeriode = tahun;
     fileTagPeriode = tahun;
     hariDalamPeriode = 365;
   } else {
-    const bulan = filterDashboardPeriode; // format YYYY-MM
+    const bulan = aktif.periode; // format YYYY-MM
     const [th, bl] = bulan.split('-');
     txPeriode = transaksi.filter(t => t.tanggal.slice(0, 7) === bulan);
     namaPeriode = new Date(th, bl - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
@@ -1718,10 +1732,10 @@ function generatePDF() {
 
   // Saldo dihitung sampai akhir periode yang dipilih (bukan real-time all-time)
   let batasTanggalPeriode;
-  if (filterDashboardType === 'tahun') {
-    batasTanggalPeriode = `${filterDashboardPeriode}-12-31`;
+  if (aktif.tipe === 'tahun') {
+    batasTanggalPeriode = `${aktif.periode}-12-31`;
   } else {
-    const [th, bl] = filterDashboardPeriode.split('-');
+    const [th, bl] = aktif.periode.split('-');
     batasTanggalPeriode = new Date(th, bl, 0).toISOString().slice(0, 10);
   }
   const txSampaiPeriode = transaksi.filter(t => t.tanggal <= batasTanggalPeriode && t.kategori !== 'Transfer');
@@ -1982,14 +1996,15 @@ function toggleHistoriTarget(id) {
 function exportExcel() {
   const wb = XLSX.utils.book_new();
 
-  // Filter transaksi sesuai periode Dashboard yang lagi dipilih
+  // Filter transaksi sesuai periode Dashboard yang lagi dipilih (baca langsung dari dropdown)
+  const aktif = getPeriodeAktif();
   let txPeriode, fileTagPeriode;
-  if (filterDashboardType === 'tahun') {
-    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 4) === filterDashboardPeriode);
-    fileTagPeriode = filterDashboardPeriode;
+  if (aktif.tipe === 'tahun') {
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 4) === aktif.periode);
+    fileTagPeriode = aktif.periode;
   } else {
-    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 7) === filterDashboardPeriode);
-    fileTagPeriode = filterDashboardPeriode;
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 7) === aktif.periode);
+    fileTagPeriode = aktif.periode;
   }
 
   const txHeader = ['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Tipe', 'Jumlah'];
