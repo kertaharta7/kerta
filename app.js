@@ -1655,8 +1655,23 @@ function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const bulanIni = new Date().toISOString().slice(0, 7);
-  const namaBulan = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  // Tentukan periode & label sesuai filter Dashboard yang lagi dipilih
+  let txPeriode, namaPeriode, fileTagPeriode, hariDalamPeriode;
+  if (filterDashboardType === 'tahun') {
+    const tahun = filterDashboardPeriode;
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 4) === tahun);
+    namaPeriode = tahun;
+    fileTagPeriode = tahun;
+    hariDalamPeriode = 365;
+  } else {
+    const bulan = filterDashboardPeriode; // format YYYY-MM
+    const [th, bl] = bulan.split('-');
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 7) === bulan);
+    namaPeriode = new Date(th, bl - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    fileTagPeriode = bulan;
+    hariDalamPeriode = new Date(th, bl, 0).getDate();
+  }
+
   const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -1688,26 +1703,35 @@ function generatePDF() {
   doc.text('KERTA', margin, 12);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('Laporan Keuangan Bulanan', margin, 19);
+  doc.text('Laporan Keuangan', margin, 19);
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text(namaBulan, pageW - margin, 12, { align: 'right' });
+  doc.text(namaPeriode, pageW - margin, 12, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text('Dicetak: ' + tglCetak, pageW - margin, 19, { align: 'right' });
 
   let y = 36;
 
-  const txBulanIni = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanIni);
-  const totalMasuk = txBulanIni.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const totalKeluar = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allMasuk = transaksi.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
-  const allKeluar = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const totalMasuk = txPeriode.filter(t => t.tipe === 'masuk' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+  const totalKeluar = txPeriode.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0);
+
+  // Saldo dihitung sampai akhir periode yang dipilih (bukan real-time all-time)
+  let batasTanggalPeriode;
+  if (filterDashboardType === 'tahun') {
+    batasTanggalPeriode = `${filterDashboardPeriode}-12-31`;
+  } else {
+    const [th, bl] = filterDashboardPeriode.split('-');
+    batasTanggalPeriode = new Date(th, bl, 0).toISOString().slice(0, 10);
+  }
+  const txSampaiPeriode = transaksi.filter(t => t.tanggal <= batasTanggalPeriode && t.kategori !== 'Transfer');
+  const masukSampaiPeriode = txSampaiPeriode.filter(t => t.tipe === 'masuk').reduce((s,t) => s+t.jumlah, 0);
+  const keluarSampaiPeriode = txSampaiPeriode.filter(t => t.tipe === 'keluar').reduce((s,t) => s+t.jumlah, 0);
   const totalSaldoAwal = Object.values(saldoAwal).reduce((s, v) => s + v, 0);
-  const saldo = totalSaldoAwal + allMasuk - allKeluar;
+  const saldo = totalSaldoAwal + masukSampaiPeriode - keluarSampaiPeriode;
+
   const cashflow = totalMasuk - totalKeluar;
   const savingRate = totalMasuk > 0 ? ((cashflow / totalMasuk) * 100).toFixed(1) : 0;
-  const hariIni = new Date().getDate();
 
   y = addSectionTitle('RINGKASAN KEUANGAN', y);
 
@@ -1715,9 +1739,9 @@ function generatePDF() {
   doc.autoTable({
     startY: y,
     body: [
-      ['Saldo Total', formatRupiah(saldo), 'Pemasukan Bulan Ini', formatRupiah(totalMasuk)],
-      ['Pengeluaran Bulan Ini', formatRupiah(totalKeluar), 'Cashflow Bersih', (cashflow >= 0 ? '+' : '-') + formatRupiah(Math.abs(cashflow))],
-      ['Saving Rate', savingRate + '%', 'Rata-rata Pengeluaran/Hari', formatRupiah(hariIni > 0 ? totalKeluar / hariIni : 0)],
+      ['Saldo Total', formatRupiah(saldo), 'Pemasukan Periode Ini', formatRupiah(totalMasuk)],
+      ['Pengeluaran Periode Ini', formatRupiah(totalKeluar), 'Cashflow Bersih', (cashflow >= 0 ? '+' : '-') + formatRupiah(Math.abs(cashflow))],
+      ['Saving Rate', savingRate + '%', 'Rata-rata Pengeluaran/Hari', formatRupiah(hariDalamPeriode > 0 ? totalKeluar / hariDalamPeriode : 0)],
     ],
     theme: 'grid',
     styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
@@ -1733,7 +1757,7 @@ function generatePDF() {
 
   const anggaranRows = Object.keys(budget).map(kat => {
     const batas = budget[kat];
-    const terpakai = txBulanIni.filter(t => t.tipe === 'keluar' && t.kategori === kat).reduce((s,t) => s+t.jumlah, 0);
+    const terpakai = txPeriode.filter(t => t.tipe === 'keluar' && t.kategori === kat).reduce((s,t) => s+t.jumlah, 0);
     const persen = batas > 0 ? ((terpakai / batas) * 100).toFixed(0) : 0;
     const status = terpakai > batas ? 'Melebihi' : persen >= 80 ? 'Hampir Batas' : 'Aman';
     return [kat, formatRupiah(terpakai), formatRupiah(batas), persen + '%', status];
@@ -1761,42 +1785,42 @@ function generatePDF() {
     y = doc.lastAutoTable.finalY + 8;
   }
 
-const txRows_data = txBulanIni.map(t => {
-  const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
-  const prefix = t.tipe === 'masuk' ? '+' : t.tipe === 'keluar' ? '-' : '⇄';
-  const warna = t.tipe === 'masuk' ? [22, 163, 74] : t.tipe === 'keluar' ? [220, 38, 38] : [99, 102, 241];
-  const keterangan = (t.keterangan || '-')
-    .replace(/\u2014/g, '-')
-    .replace(/\u2013/g, '-')
-    .replace(/[^\x00-\x7F]/g, '');
-  return [
-    tgl,
-    keterangan,
-    t.kategori || '-',
-    { content: prefix + formatRupiah(t.jumlah), styles: { textColor: warna, halign: 'right' } }
-  ];
-});
-
-if (txRows_data.length > 0) {
-  y = checkNewPage(y, 30);
-  y = addSectionTitle('RIWAYAT TRANSAKSI BULAN INI', y);
-  doc.autoTable({
-    startY: y,
-    head: [['Tanggal', 'Keterangan', 'Kategori', 'Jumlah']],
-    body: txRows_data,
-    theme: 'striped',
-    headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
-    styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
-    columnStyles: {
-      0: { cellWidth: 20 },
-      1: { cellWidth: 80 },
-      2: { cellWidth: 35 },
-      3: { cellWidth: 47, halign: 'right' }
-    },
-    margin: { left: margin, right: margin }
+  const txRows_data = txPeriode.map(t => {
+    const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+    const prefix = t.tipe === 'masuk' ? '+' : t.tipe === 'keluar' ? '-' : '⇄';
+    const warna = t.tipe === 'masuk' ? [22, 163, 74] : t.tipe === 'keluar' ? [220, 38, 38] : [99, 102, 241];
+    const keterangan = (t.keterangan || '-')
+      .replace(/\u2014/g, '-')
+      .replace(/\u2013/g, '-')
+      .replace(/[^\x00-\x7F]/g, '');
+    return [
+      tgl,
+      keterangan,
+      t.kategori || '-',
+      { content: prefix + formatRupiah(t.jumlah), styles: { textColor: warna, halign: 'right' } }
+    ];
   });
-  y = doc.lastAutoTable.finalY + 8;
-}
+
+  if (txRows_data.length > 0) {
+    y = checkNewPage(y, 30);
+    y = addSectionTitle('RIWAYAT TRANSAKSI PERIODE INI', y);
+    doc.autoTable({
+      startY: y,
+      head: [['Tanggal', 'Keterangan', 'Kategori', 'Jumlah']],
+      body: txRows_data,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 47, halign: 'right' }
+      },
+      margin: { left: margin, right: margin }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
 
   const hpAktif = hpData.filter(h => (h.jumlah - (h.terbayar || 0)) > 0);
   if (hpAktif.length > 0) {
@@ -1826,14 +1850,14 @@ if (txRows_data.length > 0) {
       headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 9, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       columnStyles: {
-  0: { cellWidth: 16 },
-  1: { cellWidth: 24 },
-  2: { cellWidth: 46 },
-  3: { cellWidth: 24 },
-  4: { cellWidth: 26, halign: 'right' },
-  5: { cellWidth: 25, halign: 'right' },
-  6: { cellWidth: 22, halign: 'right' }
-},
+        0: { cellWidth: 16 },
+        1: { cellWidth: 24 },
+        2: { cellWidth: 46 },
+        3: { cellWidth: 24 },
+        4: { cellWidth: 26, halign: 'right' },
+        5: { cellWidth: 25, halign: 'right' },
+        6: { cellWidth: 22, halign: 'right' }
+      },
       margin: { left: margin, right: margin }
     });
     y = doc.lastAutoTable.finalY + 8;
@@ -1893,17 +1917,8 @@ if (txRows_data.length > 0) {
     doc.text('Halaman ' + i + ' dari ' + pageCount, pageW - margin, footerY, { align: 'right' });
   }
 
-  doc.save('laporan-kerta-' + bulanIni + '.pdf');
+  doc.save('laporan-kerta-' + fileTagPeriode + '.pdf');
   toggleMenu();
-}
-function toggleHistori(id) {
-  const el = document.getElementById(id);
-  const key = id.replace('histori-', '');
-  const icon = document.getElementById('icon-' + key);
-  if (!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  if (icon) icon.textContent = isOpen ? '▼' : '▲';
 }
 
 function aturSaldoAwal() {
@@ -1967,8 +1982,18 @@ function toggleHistoriTarget(id) {
 function exportExcel() {
   const wb = XLSX.utils.book_new();
 
+  // Filter transaksi sesuai periode Dashboard yang lagi dipilih
+  let txPeriode, fileTagPeriode;
+  if (filterDashboardType === 'tahun') {
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 4) === filterDashboardPeriode);
+    fileTagPeriode = filterDashboardPeriode;
+  } else {
+    txPeriode = transaksi.filter(t => t.tanggal.slice(0, 7) === filterDashboardPeriode);
+    fileTagPeriode = filterDashboardPeriode;
+  }
+
   const txHeader = ['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Tipe', 'Jumlah'];
-  const txRows = [...transaksi]
+  const txRows = [...txPeriode]
     .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
     .map(t => [
       t.tanggal,
@@ -1996,18 +2021,17 @@ function exportExcel() {
 
   const targetHeader = ['Nama', 'Target', 'Terkumpul', 'Sisa', 'Persen', 'Deadline'];
   const targetRows = targetData.map(tgt => [
-  hapusEmoji(tgt.emoji + ' ' + tgt.nama),
-  tgt.jumlah,
-  tgt.terkumpul || 0,
-  tgt.jumlah - (tgt.terkumpul || 0),
-  (((tgt.terkumpul || 0) / tgt.jumlah) * 100).toFixed(1) + '%',
-  tgt.deadline || '-'
-]);
+    hapusEmoji(tgt.emoji + ' ' + tgt.nama),
+    tgt.jumlah,
+    tgt.terkumpul || 0,
+    tgt.jumlah - (tgt.terkumpul || 0),
+    (((tgt.terkumpul || 0) / tgt.jumlah) * 100).toFixed(1) + '%',
+    tgt.deadline || '-'
+  ]);
   const wsTarget = XLSX.utils.aoa_to_sheet([targetHeader, ...targetRows]);
   XLSX.utils.book_append_sheet(wb, wsTarget, 'Target');
 
-  const tgl = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `kerta-export-${tgl}.xlsx`);
+  XLSX.writeFile(wb, `kerta-export-${fileTagPeriode}.xlsx`);
   toggleMenu();
 }
 
