@@ -1935,6 +1935,16 @@ function generatePDF() {
   toggleMenu();
 }
 
+function toggleHistori(id) {
+  const el = document.getElementById(id);
+  const key = id.replace('histori-', '');
+  const icon = document.getElementById('icon-' + key);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▼' : '▲';
+}
+
 function aturSaldoAwal() {
   const existing = document.getElementById('modal-saldo-awal');
   if (existing) existing.remove();
