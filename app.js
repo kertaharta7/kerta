@@ -557,7 +557,17 @@ function editTransaksi(key) {
   document.getElementById('jumlah').value = t.jumlah;
   document.getElementById('tanggal').value = t.tanggal;
   document.getElementById('metode').value = t.metode;
-  setTimeout(() => { document.getElementById('kategori').value = t.kategori; }, 50);
+  setTimeout(() => {
+    const elKat = document.getElementById('kategori');
+    const adaDiOpsi = Array.from(elKat.options).some(o => o.value === t.kategori);
+    if (!adaDiOpsi) {
+      const opt = document.createElement('option');
+      opt.value = t.kategori;
+      opt.textContent = t.kategori + ' (kategori dihapus)';
+      elKat.appendChild(opt);
+    }
+    elKat.value = t.kategori;
+  }, 50);
   const btn = document.getElementById('btn-simpan-transaksi');
   btn.textContent = '✏️ Update Transaksi';
   btn.onclick = () => updateTransaksi(key);
@@ -1564,6 +1574,19 @@ function tambahKategori(tipe) {
 }
 
 function hapusKategori(tipe, nama) {
+  const dipakaiTransaksi = transaksi.some(t => t.kategori === nama);
+  const dipakaiBudget = tipe === 'keluar' && budget[nama] !== undefined;
+
+  if (dipakaiTransaksi || dipakaiBudget) {
+    let pesan = `Kategori "${nama}" masih dipakai`;
+    if (dipakaiTransaksi) pesan += ' di transaksi';
+    if (dipakaiTransaksi && dipakaiBudget) pesan += ' dan';
+    if (dipakaiBudget) pesan += ' di anggaran';
+    pesan += '. Kategori tidak bisa dihapus selama masih dipakai. Hapus/ubah dulu transaksi & anggaran yang pakai kategori ini.';
+    alert(pesan);
+    return;
+  }
+
   if (!confirm(`Hapus kategori "${nama}"?`)) return;
   if (tipe === 'keluar') {
     katKeluar = katKeluar.filter(k => k !== nama);
