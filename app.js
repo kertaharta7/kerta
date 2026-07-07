@@ -32,8 +32,6 @@ function updateRefs() {
 
 let transaksi = [];
 let tipeAktif = 'masuk';
-let grafikInstance = null;
-let grafikSaldoInstance = null;
 let grafikSaldoHarianInstance = null;
 let grafikPengeluaranHarianInstance = null;
 let grafikDonutInstance = null;
@@ -159,7 +157,22 @@ function hentikanListeners() {
 }
 
 // ======= TAB =======
+function resetSemuaFormEdit() {
+  const btnTx = document.getElementById('btn-simpan-transaksi');
+  if (btnTx) { btnTx.textContent = '+ Simpan Transaksi'; btnTx.onclick = tambahTransaksi; }
+
+  const btnBudget = document.getElementById('btn-simpan-budget');
+  if (btnBudget) { btnBudget.textContent = 'Set Anggaran'; btnBudget.onclick = simpanBudget; }
+
+  const btnHP = document.getElementById('btn-simpan-hp');
+  if (btnHP) { btnHP.textContent = '+ Tambah'; btnHP.onclick = tambahHP; }
+
+  const btnTarget = document.getElementById('btn-simpan-target');
+  if (btnTarget) { btnTarget.textContent = '+ Tambah Target'; btnTarget.onclick = tambahTarget; }
+}
+
 function gotoTab(tabId, el) {
+  resetSemuaFormEdit();
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
@@ -167,7 +180,6 @@ function gotoTab(tabId, el) {
   const filterBar = document.getElementById('dashboard-filter-bar');
   if (filterBar) filterBar.style.display = tabId === 'ringkasan' ? 'flex' : 'none';
   if (tabId === 'ringkasan') renderDashboard();
-  if (tabId === 'grafik') renderGrafikAll();
 }
 
 // ======= FORMAT =======
@@ -656,7 +668,6 @@ function render() {
 const saldo = totalSaldoAwal + allMasuk - allKeluar;
 
   document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
-  document.getElementById('total-masuk').textContent = formatRupiah(totalMasuk);
   document.getElementById('total-keluar').textContent = formatRupiah(totalKeluar);
   document.getElementById('saldo').textContent = formatRupiah(Math.abs(saldo));
   document.getElementById('saldo').style.color = saldo < 0 ? '#dc2626' : '#1e293b';
@@ -757,6 +768,8 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
       `;
     }).join('');
   }
+
+  renderDashboard();
 }
 
 // ======= BUDGET =======
@@ -787,6 +800,9 @@ function updateBudget(katLama) {
   const katBaru = document.getElementById('budget-kat').value;
   const nominal = parseFloat(document.getElementById('budget-nominal').value);
   if (!nominal || nominal <= 0) { alert('Isi nominal anggaran!'); return; }
+  if (katBaru !== katLama && budget[katBaru] !== undefined) {
+    if (!confirm(`Kategori "${katBaru}" sudah punya anggaran (${formatRupiah(budget[katBaru])}). Timpa dengan nominal baru?`)) return;
+  }
   if (katBaru !== katLama) {
     remove(ref(db, `budget/${katLama}`));
   }
@@ -843,29 +859,6 @@ function renderBudget() {
   }).join('');
 }
 
-// ======= GRAFIK =======
-function renderGrafikAll() {
-  const sumber = transaksi;
-  const dataKategori = {};
-  sumber.filter(t => t.kategori !== 'Transfer').forEach(t => {
-    if (!dataKategori[t.kategori]) dataKategori[t.kategori] = { masuk: 0, keluar: 0 };
-    dataKategori[t.kategori][t.tipe] += t.jumlah;
-  });
-  const labels = Object.keys(dataKategori);
-  if (grafikInstance) grafikInstance.destroy();
-  if (labels.length > 0) {
-    const ctx = document.getElementById('grafikKategori').getContext('2d');
-    grafikInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Pemasukan', data: labels.map(k => dataKategori[k].masuk), backgroundColor: '#10b981', borderRadius: 6, borderSkipped: false }, { label: 'Pengeluaran', data: labels.map(k => dataKategori[k].keluar), backgroundColor: '#ef4444', borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, plugins: { legend: { display: true, position: 'top' }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: Rp ${c.raw.toLocaleString('id-ID')}` } } }, scales: { y: { ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') } } } } });
-  }
-  const aktif = metodeList.filter(m => sumber.some(t => t.metode === m));
-  const masukAktif = aktif.map(m => sumber.filter(t => t.tipe === 'masuk' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0));
-  const keluarAktif = aktif.map(m => sumber.filter(t => t.tipe === 'keluar' && t.metode === m && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0));
-  if (grafikSaldoInstance) grafikSaldoInstance.destroy();
-  if (aktif.length > 0) {
-    const ctx2 = document.getElementById('grafikSaldo').getContext('2d');
-    grafikSaldoInstance = new Chart(ctx2, { type: 'bar', data: { labels: aktif, datasets: [{ label: 'Pemasukan', data: masukAktif, backgroundColor: '#10b981', borderRadius: 6, borderSkipped: false }, { label: 'Pengeluaran', data: keluarAktif, backgroundColor: '#ef4444', borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, plugins: { legend: { display: true, position: 'top' }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: Rp ${c.raw.toLocaleString('id-ID')}` } } }, scales: { y: { ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') } } } } });
-  }
-}
 
 function renderGrafikSaldoHarian() {
   const ctx = document.getElementById('grafikSaldoHarian');
@@ -1043,6 +1036,9 @@ function simpanCicilan() {
 
   const hp = hpData.find(h => h._key === cicilanTargetKey);
   if (!hp) return;
+
+  const sisaSaatIni = hp.jumlah - (hp.terbayar || 0);
+  if (jumlah > sisaSaatIni) { alert(`Jumlah bayar (${formatRupiah(jumlah)}) melebihi sisa (${formatRupiah(sisaSaatIni)})!`); return; }
 
   const terbayarBaru = (hp.terbayar || 0) + jumlah;
   set(ref(db, `hutangpiutang/${cicilanTargetKey}/terbayar`), terbayarBaru);
@@ -1504,6 +1500,24 @@ document.addEventListener('click', (e) => {
   const menu = document.getElementById('dropdown-menu');
   const btn = document.querySelector('.btn-menu');
   if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) menu.style.display = 'none';
+});
+
+function toggleNavMobile() {
+  const nav = document.getElementById('nav-tabs');
+  if (nav) nav.classList.toggle('nav-tabs-open');
+}
+
+function tutupNavMobile() {
+  const nav = document.getElementById('nav-tabs');
+  if (nav) nav.classList.remove('nav-tabs-open');
+}
+
+document.addEventListener('click', (e) => {
+  const nav = document.getElementById('nav-tabs');
+  const btn = document.getElementById('btn-hamburger');
+  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('nav-tabs-open');
+  }
 });
 
 // ======= AUTH FUNCTIONS =======
@@ -2135,3 +2149,6 @@ window.setFilterDashboard = setFilterDashboard;
 window.renderDashboard = renderDashboard;
 window.renderGrafikPengeluaranHarianPeriode = renderGrafikPengeluaranHarianPeriode;
 window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
+window.toggleMenu = toggleMenu;
+window.toggleNavMobile = toggleNavMobile;
+window.tutupNavMobile = tutupNavMobile;
