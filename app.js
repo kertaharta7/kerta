@@ -382,6 +382,7 @@ function renderDashboard() {
   renderGrafikDonutPeriode(txFiltered);
   renderGrafikPengeluaranHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
 renderGrafikSaldoHarianPeriode(txFiltered, filterDashboardPeriode, filterDashboardType);
+renderRekeningList(batasTanggalPeriode);
 }
 
 function renderGrafikDonutPeriode(txFiltered) {
@@ -926,20 +927,43 @@ function renderGrafikDonut() {
   if (legend) { legend.innerHTML = top5.map((x,i) => { const persen = total > 0 ? ((x[1]/total)*100).toFixed(0) : 0; return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:${warna[i]};flex-shrink:0"></div><span style="color:#475569">${x[0]}</span></div><div style="text-align:right"><span style="font-weight:600;color:#1e293b">${persen}%</span><div style="color:#94a3b8;font-size:11px">${formatRupiah(x[1])}</div></div></div>`; }).join(''); }
 }
 
-function renderRekeningList() {
+function renderRekeningList(batasTanggalPeriode) {
   const container = document.getElementById('rekening-list');
   const elTotal = document.getElementById('total-saldo-rekening');
   if (!container) return;
+
+  const txUntukSaldo = batasTanggalPeriode
+    ? transaksi.filter(t => t.tanggal <= batasTanggalPeriode)
+    : transaksi;
+
   let totalSaldo = 0;
   const rekeningAktif = [];
   metodeList.forEach(m => {
-    const masuk = transaksi.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
-    const keluar = transaksi.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
+    const masuk = txUntukSaldo.filter(t => t.tipe === 'masuk' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
+    const keluar = txUntukSaldo.filter(t => t.tipe === 'keluar' && t.metode === m).reduce((s,t) => s+t.jumlah, 0);
     const awal = saldoAwal[m] || 0;
-const saldo = awal + masuk - keluar;
-if (awal > 0 || masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
+    const saldo = awal + masuk - keluar;
+    if (awal > 0 || masuk > 0 || keluar > 0) { rekeningAktif.push({ nama: m, saldo }); totalSaldo += saldo; }
   });
   if (elTotal) elTotal.textContent = formatRupiah(totalSaldo);
+
+  let labelRekeningPeriode = document.getElementById('label-rekening-periode');
+  if (!labelRekeningPeriode && elTotal) {
+    labelRekeningPeriode = document.createElement('div');
+    labelRekeningPeriode.id = 'label-rekening-periode';
+    labelRekeningPeriode.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:2px';
+    if (elTotal.parentNode) elTotal.parentNode.insertBefore(labelRekeningPeriode, elTotal.nextSibling);
+  }
+  if (labelRekeningPeriode) {
+    const hariIni = new Date().toISOString().slice(0, 10);
+    if (!batasTanggalPeriode || batasTanggalPeriode >= hariIni) {
+      labelRekeningPeriode.textContent = 'Saldo saat ini';
+    } else {
+      const labelTgl = new Date(batasTanggalPeriode).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      labelRekeningPeriode.textContent = `Saldo per ${labelTgl}`;
+    }
+  }
+
   if (rekeningAktif.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada rekening.</p>'; return; }
   const ikonRekening = { Cash: '💵', BNI: '🏦', BSI: '🏦', DANA: '💙', OVO: '💜', SeaBank: '🌊', GoPay: '💚' };
   container.innerHTML = rekeningAktif.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f8fafc"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px">${ikonRekening[r.nama]||'🏦'}</div><span style="font-size:13px;font-weight:500;color:#1e293b">${r.nama}</span></div><span style="font-size:13px;font-weight:600;color:${r.saldo < 0 ? '#dc2626' : '#1e293b'}">${formatRupiah(r.saldo)}</span></div>`).join('');
