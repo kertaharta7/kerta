@@ -357,10 +357,8 @@ body {
   .cards-grid { grid-template-columns: repeat(2, 1fr); }
   .cards-grid .card:first-child { grid-column: span 2; }
   .two-col { grid-template-columns: 1fr; }
-  .nav-tabs { overflow-x: auto; }
-  .nav-tab { white-space: nowrap; padding: 10px 12px; font-size: 13px; }
   .tab-content { padding: 14px 16px; }
-  .topbar { padding: 10px 16px; }
+  .topbar { padding: 10px 16px; height: auto; min-height: 52px; }
   .form-grid { grid-template-columns: 1fr; }
   .budget-form { flex-direction: column; }
 }
