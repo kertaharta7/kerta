@@ -7,6 +7,80 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <style>
+.btn-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #1e293b;
+  padding: 4px 8px;
+  margin-right: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 8px;
+    padding-bottom: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .btn-hamburger {
+    display: inline-block;
+    order: 1;
+  }
+  .logo {
+    order: 2;
+  }
+  .topbar-actions {
+    order: 3;
+    margin-left: auto;
+  }
+  #dashboard-filter-bar {
+    order: 4;
+    width: 100%;
+    flex-basis: 100%;
+    justify-content: center;
+    padding: 10px 0 2px 0;
+    border-top: 1px solid #f1f5f9;
+  }
+  .tab-content {
+    margin-top: 10px;
+  }
+  .nav-tabs {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 500;
+    padding: 8px;
+    border-radius: 0 0 12px 12px;
+    max-height: 70vh;
+    overflow-y: auto;
+    height: auto;
+  }
+  .nav-tabs.nav-tabs-open {
+    display: flex;
+  }
+  .nav-tabs .nav-tab {
+    width: 100%;
+    height: auto;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+}
+</style>
 </head>
 <body>
 <!-- HALAMAN LOGIN -->
@@ -53,15 +127,15 @@
   <!-- APLIKASI UTAMA -->
   <div id="aplikasi-utama" style="display:none">
     <div class="topbar">
+      <button class="btn-hamburger" id="btn-hamburger" onclick="toggleNavMobile()">☰</button>
       <span class="logo">✦ Kerta</span>
-      <div class="nav-tabs">
-        <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">Dashboard</button>
-        <button class="nav-tab" onclick="gotoTab('transaksi', this)">Transaksi</button>
-        <button class="nav-tab" onclick="gotoTab('anggaran', this)">Anggaran</button>
-        <button class="nav-tab" onclick="gotoTab('hutang', this)">Hutang & Piutang</button>
-        <button class="nav-tab" onclick="gotoTab('grafik', this)">Grafik</button>
-        <button class="nav-tab" onclick="gotoTab('target', this)">Target</button>
-        <button class="nav-tab" onclick="gotoTab('pengaturan', this)">⚙️ Pengaturan</button>
+      <div class="nav-tabs" id="nav-tabs">
+        <button class="nav-tab active" onclick="gotoTab('ringkasan', this); tutupNavMobile();">Dashboard</button>
+        <button class="nav-tab" onclick="gotoTab('transaksi', this); tutupNavMobile();">Transaksi</button>
+        <button class="nav-tab" onclick="gotoTab('anggaran', this); tutupNavMobile();">Anggaran</button>
+        <button class="nav-tab" onclick="gotoTab('hutang', this); tutupNavMobile();">Hutang & Piutang</button>
+        <button class="nav-tab" onclick="gotoTab('target', this); tutupNavMobile();">Target</button>
+        <button class="nav-tab" onclick="gotoTab('pengaturan', this); tutupNavMobile();">⚙️ Pengaturan</button>
       </div>
 
       <!-- FILTER DASHBOARD — muncul otomatis saat tab Dashboard aktif -->
@@ -484,21 +558,7 @@
       </div>
     </div>
   </div>
-
-  <!-- TAB GRAFIK -->
-  <div id="tab-grafik" class="tab-content">
-    <div class="two-col">
-      <div class="section-box">
-        <div class="section-title">Pemasukan & Pengeluaran per Kategori</div>
-        <canvas id="grafikKategori"></canvas>
-      </div>
-      <div class="section-box">
-        <div class="section-title">Saldo per Rekening</div>
-        <canvas id="grafikSaldo"></canvas>
-      </div>
-    </div>
-  </div>
-
+  
 </div>
 </div>
 
