@@ -1,0 +1,44 @@
+name: Deploy Kerta (Minified)
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install terser
+        run: npm install -g terser
+
+      - name: Susun folder hasil build
+        run: |
+          mkdir dist
+          rsync -av --exclude='.git' --exclude='.github' --exclude='dist' --exclude='node_modules' ./ dist/
+          terser app.js --module --compress --mangle --output dist/app.js
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy ke GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
