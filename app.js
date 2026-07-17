@@ -17,6 +17,74 @@ const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
 
 let currentUser = null;
+let demoMode = false;
+
+const dataDemo = {
+  transaksi: [
+    { id: 1, tipe: 'masuk', keterangan: 'Gaji Bulanan', jumlah: 6600000, kategori: 'Gaji', tanggal: '2026-07-01', metode: 'BNI' },
+    { id: 2, tipe: 'keluar', keterangan: 'Belanja Bulanan', jumlah: 850000, kategori: 'Sembako', tanggal: '2026-07-03', metode: 'Cash' },
+    { id: 3, tipe: 'keluar', keterangan: 'Bayar Listrik', jumlah: 420000, kategori: 'Listrik', tanggal: '2026-07-05', metode: 'DANA' },
+    { id: 4, tipe: 'keluar', keterangan: 'Makan di Luar', jumlah: 175000, kategori: 'Makan', tanggal: '2026-07-08', metode: 'GoPay' },
+    { id: 5, tipe: 'keluar', keterangan: 'Bensin', jumlah: 300000, kategori: 'BBM', tanggal: '2026-07-10', metode: 'Cash' },
+    { id: 6, tipe: 'keluar', keterangan: 'Cicilan Motor', jumlah: 900000, kategori: 'Hutang', tanggal: '2026-07-12', metode: 'BNI' },
+    { id: 7, tipe: 'masuk', keterangan: 'Jual Barang Bekas', jumlah: 250000, kategori: 'Usaha', tanggal: '2026-07-14', metode: 'OVO' },
+    { id: 8, tipe: 'keluar', keterangan: 'Sekolah Anak', jumlah: 500000, kategori: 'Sekolah Anak', tanggal: '2026-07-15', metode: 'BSI' }
+  ],
+  budget: { 'Sembako': 1200000, 'Makan': 700000, 'Transport': 400000, 'Hiburan': 300000 },
+  hpData: [
+    { nama: 'Cicilan Motor', jumlah: 12000000, tanggal: '2026-01-10', keterangan: 'Cicilan motor 12 bulan', tipe: 'hutang', terbayar: 5400000 }
+  ],
+  targetData: [
+    { nama: 'Dana Darurat', jumlah: 10000000, emoji: '🛟', deadline: '2026-12-31', terkumpul: 3500000, createdAt: Date.now() },
+    { nama: 'Umroh Keluarga', jumlah: 30000000, emoji: '🕌', deadline: '2027-06-30', terkumpul: 8000000, createdAt: Date.now() }
+  ],
+  saldoAwal: { Cash: 1500000, BNI: 2000000, DANA: 500000 }
+};
+
+function mulaiDemo() {
+  demoMode = true;
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('halaman-login').style.display = 'none';
+  document.getElementById('aplikasi-utama').style.display = 'block';
+
+  transaksi = JSON.parse(JSON.stringify(dataDemo.transaksi));
+  budget = { ...dataDemo.budget };
+  hpData = JSON.parse(JSON.stringify(dataDemo.hpData));
+  targetData = JSON.parse(JSON.stringify(dataDemo.targetData));
+  saldoAwal = { ...dataDemo.saldoAwal };
+  katKeluar = [...defaultKatKeluar];
+  katMasuk = [...defaultKatMasuk];
+  bankList = [...defaultBank];
+
+  const tglInput = document.getElementById('tanggal');
+  if (tglInput) tglInput.valueAsDate = new Date();
+  const filterBar = document.getElementById('dashboard-filter-bar');
+  if (filterBar) filterBar.style.display = 'flex';
+
+  render();
+  renderBudget();
+  renderInsight();
+  renderGrafikSaldoHarian();
+  renderGrafikPengeluaranHarian();
+  renderGrafikDonut();
+  renderRekeningList();
+  renderDashboard();
+  renderHP();
+  renderTarget();
+  renderPengaturan();
+  tampilkanBannerDemo();
+}
+
+function tampilkanBannerDemo() {
+  if (document.getElementById('banner-demo')) return;
+  const bar = document.createElement('div');
+  bar.id = 'banner-demo';
+  bar.style.cssText = 'position:sticky;top:0;z-index:200;background:#f59e0b;color:#1e293b;text-align:center;padding:10px;font-size:13px;font-weight:600;font-family:Inter,sans-serif';
+  bar.innerHTML = '🔍 Mode Demo — data contoh, perubahan tidak tersimpan. <a href="http://lynk.id/kertaharta/g1l7dr1eggm9" style="color:#4f46e5;text-decoration:underline">Beli sekarang →</a>';
+  document.body.prepend(bar);
+}
+
+window.mulaiDemo = mulaiDemo;
 
 // Referensi database
 let transaksiRef, budgetRef, hpRef, targetRef;
@@ -76,9 +144,13 @@ onAuthStateChanged(auth, (user) => {
 if (filterBar) filterBar.style.display = 'flex';
   } else {
     currentUser = null;
-    document.getElementById('halaman-login').style.display = 'flex';
-    document.getElementById('aplikasi-utama').style.display = 'none';
     hentikanListeners();
+    if (new URLSearchParams(location.search).get('demo') === '1') {
+      mulaiDemo();
+    } else {
+      document.getElementById('halaman-login').style.display = 'flex';
+      document.getElementById('aplikasi-utama').style.display = 'none';
+    }
   }
 });
 
