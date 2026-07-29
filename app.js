@@ -245,6 +245,8 @@ function resetSemuaFormEdit() {
 
 function gotoTab(tabId, el) {
   resetSemuaFormEdit();
+  document.getElementById('fab-menu')?.classList.remove('show');
+  document.getElementById('fab-btn')?.classList.remove('open');
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
@@ -1598,24 +1600,6 @@ document.addEventListener('click', (e) => {
   if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) menu.style.display = 'none';
 });
 
-function toggleNavMobile() {
-  const nav = document.getElementById('nav-tabs');
-  if (nav) nav.classList.toggle('nav-tabs-open');
-}
-
-function tutupNavMobile() {
-  const nav = document.getElementById('nav-tabs');
-  if (nav) nav.classList.remove('nav-tabs-open');
-}
-
-document.addEventListener('click', (e) => {
-  const nav = document.getElementById('nav-tabs');
-  const btn = document.getElementById('btn-hamburger');
-  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
-    nav.classList.remove('nav-tabs-open');
-  }
-});
-
 // ======= AUTH FUNCTIONS =======
 function loginUser() {
   const email = document.getElementById('login-email').value.trim();
@@ -2246,5 +2230,3 @@ window.renderDashboard = renderDashboard;
 window.renderGrafikPengeluaranHarianPeriode = renderGrafikPengeluaranHarianPeriode;
 window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
 window.toggleMenu = toggleMenu;
-window.toggleNavMobile = toggleNavMobile;
-window.tutupNavMobile = tutupNavMobile;
