@@ -8,18 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
-.btn-hamburger {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  color: #1e293b;
-  padding: 4px 8px;
-  margin-right: 8px;
-  font-family: 'Inter', sans-serif;
-}
-
+/* MOBILE TOPBAR (tanpa hamburger, nav sudah pindah ke bawah) */
 @media (max-width: 768px) {
   .topbar {
     position: relative;
@@ -30,56 +19,115 @@
     padding-bottom: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   }
-  .btn-hamburger {
-    display: inline-block;
-    order: 1;
-  }
-  .logo {
-    order: 2;
-  }
-  .topbar-actions {
-    order: 3;
-    margin-left: auto;
-  }
+  .logo { order: 1; }
+  .topbar-actions { order: 2; margin-left: auto; }
   #dashboard-filter-bar {
-    order: 4;
+    order: 3;
     width: 100%;
     flex-basis: 100%;
     justify-content: center;
     padding: 10px 0 2px 0;
     border-top: 1px solid #f1f5f9;
   }
-  .tab-content {
-    margin-top: 10px;
-  }
-  .nav-tabs {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    flex-direction: column;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    border-bottom: 1px solid #e2e8f0;
-    z-index: 500;
-    padding: 8px;
-    border-radius: 0 0 12px 12px;
-    max-height: 70vh;
-    overflow-y: auto;
-    height: auto;
-  }
-  .nav-tabs.nav-tabs-open {
-    display: flex;
-  }
-  .nav-tabs .nav-tab {
-    width: 100%;
-    height: auto;
-    text-align: left;
-    padding: 12px 14px;
-    border-radius: 8px;
-  }
+  .tab-content { margin-top: 10px; }
 }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+  z-index: 500;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.bottom-nav::-webkit-scrollbar { display: none; }
+
+.bottom-nav .nav-tab {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-radius: 12px;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.bottom-nav .nav-tab span { font-size: 10px; }
+.bottom-nav .nav-tab.active { color: #4F46E5; background: #EEF2FF; }
+
+#aplikasi-utama { padding-bottom: 78px; }
+
+/* FLOATING ADD BUTTON */
+.fab-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 82px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #4F46E5;
+  color: white;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(79,70,229,0.4);
+  z-index: 501;
+  transition: transform .15s ease, opacity .15s ease;
+  cursor: pointer;
+}
+.fab-btn:active { transform: scale(0.94); }
+.fab-btn.open { transform: rotate(45deg); }
+
+.fab-menu {
+  position: fixed;
+  right: 20px;
+  bottom: 148px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+  padding: 6px;
+  min-width: 190px;
+  z-index: 501;
+  display: none;
+  flex-direction: column;
+}
+.fab-menu.show { display: flex; }
+.fab-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+.fab-menu button:hover { background: #F8FAFC; }
 </style>
 </head>
 <body>
@@ -127,16 +175,7 @@
   <!-- APLIKASI UTAMA -->
   <div id="aplikasi-utama" style="display:none">
     <div class="topbar">
-      <button class="btn-hamburger" id="btn-hamburger" onclick="toggleNavMobile()">☰</button>
       <span class="logo">✦ Kerta</span>
-      <div class="nav-tabs" id="nav-tabs">
-        <button class="nav-tab active" onclick="gotoTab('ringkasan', this); tutupNavMobile();">Dashboard</button>
-        <button class="nav-tab" onclick="gotoTab('transaksi', this); tutupNavMobile();">Transaksi</button>
-        <button class="nav-tab" onclick="gotoTab('anggaran', this); tutupNavMobile();">Anggaran</button>
-        <button class="nav-tab" onclick="gotoTab('hutang', this); tutupNavMobile();">Hutang & Piutang</button>
-        <button class="nav-tab" onclick="gotoTab('target', this); tutupNavMobile();">Target</button>
-        <button class="nav-tab" onclick="gotoTab('pengaturan', this); tutupNavMobile();">⚙️ Pengaturan</button>
-      </div>
 
       <!-- FILTER DASHBOARD — muncul otomatis saat tab Dashboard aktif -->
       <div id="dashboard-filter-bar" style="display:none;align-items:center;gap:6px">
@@ -558,9 +597,35 @@
       </div>
     </div>
   </div>
-  
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="nav-tabs">
+    <button class="nav-tab active" onclick="gotoTab('ringkasan', this)">🏠<span>Dashboard</span></button>
+    <button class="nav-tab" onclick="gotoTab('transaksi', this)">💳<span>Transaksi</span></button>
+    <button class="nav-tab" onclick="gotoTab('anggaran', this)">🎯<span>Anggaran</span></button>
+    <button class="nav-tab" onclick="gotoTab('hutang', this)">🤝<span>Hutang</span></button>
+    <button class="nav-tab" onclick="gotoTab('target', this)">🏆<span>Target</span></button>
+    <button class="nav-tab" onclick="gotoTab('pengaturan', this)">⚙️<span>Atur</span></button>
+  </nav>
+
+  <!-- FLOATING ADD BUTTON -->
+  <div class="fab-menu" id="fab-menu">
+    <button onclick="gotoTab('transaksi', document.querySelectorAll('.nav-tab')[1]); setType('masuk'); toggleFab();">⬆ Pemasukan</button>
+    <button onclick="gotoTab('transaksi', document.querySelectorAll('.nav-tab')[1]); setType('keluar'); toggleFab();">⬇ Pengeluaran</button>
+    <button onclick="gotoTab('transaksi', document.querySelectorAll('.nav-tab')[1]); setType('transfer'); toggleFab();">↔ Transfer</button>
+    <button onclick="gotoTab('hutang', document.querySelectorAll('.nav-tab')[3]); toggleFab();">🤝 Hutang / Piutang</button>
+  </div>
+  <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
+
 </div>
 </div>
+
+<script>
+function toggleFab(){
+  document.getElementById('fab-menu').classList.toggle('show');
+  document.getElementById('fab-btn').classList.toggle('open');
+}
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
