@@ -672,3 +672,138 @@ body {
   background: var(--primary);
   animation: dotPulse 1.2s infinite ease-in-out;
 }
+
+/* ======= LOGO & GREETING (gaya referensi) ======= */
+.logo {
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.greeting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 4px 16px 16px;
+}
+.greeting-hello { font-size: 14px; color: var(--text-secondary); font-weight: 500; margin-bottom: 4px; }
+.greeting-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.month-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ======= HERO SALDO v2 (gradient card, gaya referensi) ======= */
+.hero-saldo {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 60%, #3730A3 100%);
+  border-radius: var(--radius-card);
+  border: none;
+  box-shadow: 0 12px 28px rgba(79,70,229,0.28);
+  padding: 20px;
+  color: white;
+}
+.hero-saldo::after {
+  content: 'K';
+  position: absolute;
+  right: -10px; top: -30px;
+  font-size: 160px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+}
+.hero-top-row { display: flex; justify-content: space-between; align-items: center; }
+.hero-label { font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 500; }
+.hero-eye { background: none; border: none; color: rgba(255,255,255,0.85); cursor: pointer; padding: 0; }
+.hero-nilai { font-size: 34px; font-weight: 800; color: white; margin: 8px 0 14px; letter-spacing: -0.02em; }
+.hero-divider { height: 1px; background: rgba(255,255,255,0.2); margin-bottom: 14px; }
+.hero-status-row { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; position: relative; z-index: 1; }
+.hero-status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.16);
+  padding: 4px 10px; border-radius: 999px;
+  font-weight: 600; color: white;
+}
+.hero-status-badge.waspada { background: rgba(239,68,68,0.35); }
+.hero-status-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.3); }
+.hero-sisa-label { color: rgba(255,255,255,0.75); }
+.hero-sisa-nilai { color: #A7F3D0; font-weight: 700; margin-left: 4px; }
+
+/* ======= RINGKASAN CARD (pemasukan/pengeluaran gabung) ======= */
+.ringkasan-card {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+}
+.ringkasan-col { flex: 1; display: flex; align-items: center; gap: 12px; }
+.ringkasan-divider { width: 1px; align-self: stretch; background: var(--border); margin: 0 14px; }
+.ringkasan-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px;
+}
+.ringkasan-label { font-size: 12px; color: var(--text-secondary); }
+.ringkasan-nilai { font-size: 16px; font-weight: 700; margin: 2px 0; }
+.ringkasan-sub { font-size: 11px; color: var(--text-secondary); }
+
+/* ======= PERLU PERHATIAN (budget mini, gaya referensi) ======= */
+.perhatian-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.perhatian-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.perhatian-body { flex: 1; min-width: 0; }
+.perhatian-nama { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.perhatian-track { height: 8px; background: #F1F2F5; border-radius: 999px; overflow: hidden; }
+.perhatian-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+.perhatian-pct {
+  font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px; flex-shrink: 0;
+}
+
+/* ======= INSIGHT BANNER (single, gaya referensi) ======= */
+.insight-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--primary-light);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.insight-banner .ib-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(79,70,229,0.14);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 15px;
+}
+.insight-banner .ib-body { flex: 1; font-size: 13px; color: var(--text-primary); }
+.insight-banner .ib-body strong { color: var(--primary); }
+.insight-banner .ib-title { font-weight: 700; margin-bottom: 2px; display: block; }
+.insight-banner .ib-arrow { color: var(--text-secondary); flex-shrink: 0; }
+
+/* ======= TX MINI (ikon warna per kategori) ======= */
+.tx-mini-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.tx-mini-icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.tx-mini-body { flex: 1; min-width: 0; }
+.tx-mini-nama { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.tx-mini-waktu { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.tx-mini-nominal { font-size: 14px; font-weight: 700; flex-shrink: 0; }
+
+/* ======= FAB gradient (gaya referensi) ======= */
+.fab-btn { background: linear-gradient(135deg, #7C3AED, #4F46E5); }
