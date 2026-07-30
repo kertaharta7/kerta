@@ -261,6 +261,31 @@ function formatRupiah(angka) {
   return 'Rp ' + Math.round(angka).toLocaleString('id-ID');
 }
 
+let saldoTersembunyi = false;
+function toggleSaldo() {
+  saldoTersembunyi = !saldoTersembunyi;
+  const el = document.getElementById('saldo');
+  const btn = document.getElementById('btn-eye-saldo');
+  if (saldoTersembunyi) { el.dataset.asli = el.textContent; el.textContent = 'Rp ••••••'; btn.textContent = '🙈'; }
+  else { el.textContent = el.dataset.asli || el.textContent; btn.textContent = '👁'; }
+}
+
+function updateGreeting() {
+  const jam = new Date().getHours();
+  const teks = jam < 11 ? 'Selamat pagi 👋' : jam < 15 ? 'Selamat siang 👋' : jam < 18 ? 'Selamat sore 👋' : 'Selamat malam 👋';
+  const el = document.getElementById('greeting-text');
+  if (el) el.textContent = teks;
+}
+updateGreeting();
+
+function updateHeroStatus(totalAnggaran, totalTerpakai) {
+  const badge = document.getElementById('hero-status-badge');
+  if (!badge) return;
+  const persen = totalAnggaran > 0 ? (totalTerpakai / totalAnggaran) * 100 : 0;
+  if (persen >= 100) { badge.textContent = '⚠ Waspada'; badge.className = 'hero-status-badge waspada'; }
+  else { badge.textContent = '✓ Aman'; badge.className = 'hero-status-badge'; }
+}
+
 // ======= FILTER =======
 function setFilterType(type, el) {
   filterType = type;
@@ -441,15 +466,17 @@ function renderDashboard() {
       const color = t.tipe === 'masuk' ? '#16a34a' : '#dc2626';
       const bgColor = t.tipe === 'masuk' ? '#dcfce7' : '#fee2e2';
       const ikon = ikonKategori[t.kategori] || '📦';
-      const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      return `<li style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8fafc">
-        <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ikon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:500;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.keterangan}</div>
-          <div style="font-size:11px;color:#94a3b8">${t.kategori} · ${t.metode} · ${tgl}</div>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:${color};flex-shrink:0">${sign}${formatRupiah(t.jumlah)}</div>
-      </li>`;
+      const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      return `
+        <li class="tx-mini-row" style="list-style:none">
+          <div class="tx-mini-icon" style="background:${bgColor}">${ikon}</div>
+          <div class="tx-mini-body">
+            <div class="tx-mini-nama">${t.keterangan}</div>
+            <div class="tx-mini-waktu">${tgl}</div>
+          </div>
+          <div class="tx-mini-nominal" style="color:${color}">${sign}${formatRupiah(t.jumlah)}</div>
+        </li>
+      `;
     }).join('');
   }
 
@@ -830,15 +857,15 @@ const saldo = totalSaldoAwal + allMasuk - allKeluar;
       const color = t.tipe === 'masuk' ? '#16a34a' : '#dc2626';
       const bgColor = t.tipe === 'masuk' ? '#dcfce7' : '#fee2e2';
       const ikon = ikonKategori[t.kategori] || '📦';
-      const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      const tgl = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
       return `
-        <li style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8fafc">
-          <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ikon}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.keterangan}</div>
-            <div style="font-size:11px;color:#94a3b8">${t.kategori} · ${t.metode} · ${tgl}</div>
+        <li class="tx-mini-row" style="list-style:none">
+          <div class="tx-mini-icon" style="background:${bgColor}">${ikon}</div>
+          <div class="tx-mini-body">
+            <div class="tx-mini-nama">${t.keterangan}</div>
+            <div class="tx-mini-waktu">${tgl}</div>
           </div>
-          <div style="font-size:13px;font-weight:600;color:${color};flex-shrink:0">${sign}${formatRupiah(t.jumlah)}</div>
+          <div class="tx-mini-nominal" style="color:${color}">${sign}${formatRupiah(t.jumlah)}</div>
         </li>
       `;
     }).join('');
@@ -905,16 +932,28 @@ function renderBudget() {
   if (elAnggaranTab) elAnggaranTab.textContent = formatRupiah(totalAnggaran);
   if (elSisaTab) { elSisaTab.textContent = formatRupiah(Math.abs(totalSisa)); elSisaTab.style.color = totalSisa < 0 ? '#dc2626' : '#1e293b'; }
 
+  const ikonBudget = { BBM:'⛽', Makan:'🍽️', Transport:'🚗', Sembako:'🛒', Listrik:'💡', Hiburan:'🎬', Belanja:'🛍️' };
   const budgetMini = document.getElementById('budget-mini');
   if (budgetMini) {
     if (keys.length === 0) { budgetMini.innerHTML = '<p style="font-size:13px;color:#94a3b8">Belum ada anggaran.</p>'; }
     else {
-      budgetMini.innerHTML = keys.map(kat => {
+      const dataBudget = keys.map(kat => {
         const batas = budget[kat];
         const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
-        const persen = Math.min((terpakai / batas) * 100, 100).toFixed(0);
-        const warna = terpakai > batas ? '#ef4444' : persen >= 80 ? '#f59e0b' : '#10b981';
-        return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500">${kat}</span><span style="color:#94a3b8">${formatRupiah(terpakai)} / ${formatRupiah(batas)}</span></div><div style="height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:${persen}%;background:${warna};border-radius:4px;transition:width 0.4s"></div></div></div>`;
+        const persen = Math.min((terpakai / batas) * 100, 100);
+        return { kat, persen };
+      }).sort((a, b) => b.persen - a.persen).slice(0, 2);
+      budgetMini.innerHTML = dataBudget.map(({ kat, persen }) => {
+        const warna = persen >= 100 ? '#EF4444' : persen >= 80 ? '#F59E0B' : '#10B981';
+        const bg = persen >= 100 ? '#FEF2F2' : persen >= 80 ? '#FEF3C7' : '#ECFDF5';
+        return `<div class="perhatian-row">
+          <div class="perhatian-icon" style="background:${bg}">${ikonBudget[kat] || '📦'}</div>
+          <div class="perhatian-body">
+            <div class="perhatian-nama">${kat}</div>
+            <div class="perhatian-track"><div class="perhatian-fill" style="width:${persen.toFixed(0)}%;background:${warna}"></div></div>
+          </div>
+          <span class="perhatian-pct" style="background:${bg};color:${warna}">${persen.toFixed(0)}%</span>
+        </div>`;
       }).join('');
     }
   }
@@ -1509,8 +1548,13 @@ const txBulanLalu = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanLalu);
   });
   const totalHutang = hpData.filter(h => h.tipe === 'hutang').reduce((s,h) => s + (h.jumlah - (h.terbayar||0)), 0);
   if (totalHutang > 0) insights.push({ icon: '💸', warna: '#ef4444', teks: `Masih ada hutang sebesar <strong>${formatRupiah(totalHutang)}</strong> yang belum lunas.` });
-  if (insights.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">Belum ada insight.</p>'; return; }
-  container.innerHTML = insights.map(i => `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border-left:3px solid ${i.warna}"><span style="font-size:18px;flex-shrink:0">${i.icon}</span><p style="font-size:13px;color:#1e293b;line-height:1.5">${i.teks}</p></div>`).join('');
+  if (insights.length === 0) { container.innerHTML = ''; return; }
+  const top = insights[0];
+  container.innerHTML = `<div class="insight-banner">
+    <div class="ib-icon">💡</div>
+    <div class="ib-body"><span class="ib-title">Insight Hari Ini</span>${top.teks}</div>
+    <span class="ib-arrow">›</span>
+  </div>`;
 }
 
 // ======= NOTIFIKASI =======
@@ -2230,3 +2274,4 @@ window.renderDashboard = renderDashboard;
 window.renderGrafikPengeluaranHarianPeriode = renderGrafikPengeluaranHarianPeriode;
 window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
 window.toggleMenu = toggleMenu;
+window.toggleSaldo = toggleSaldo;
