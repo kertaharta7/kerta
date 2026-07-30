@@ -175,7 +175,7 @@
   <!-- APLIKASI UTAMA -->
   <div id="aplikasi-utama" style="display:none">
     <div class="topbar">
-      <span class="logo">✦ Kerta</span>
+      <span class="logo">Kerta</span>
 
       <!-- FILTER DASHBOARD — muncul otomatis saat tab Dashboard aktif -->
       <div id="dashboard-filter-bar" style="display:none;align-items:center;gap:6px">
@@ -198,6 +198,7 @@
       </div>
 
       <div class="topbar-actions">
+        <button class="btn-menu" style="margin-right:4px" onclick="alert('Belum ada notifikasi baru')">🔔</button>
         <div class="topbar-menu">
           <button class="btn-menu" onclick="toggleMenu()">⋯</button>
           <div id="dropdown-menu" class="dropdown-menu" style="display:none">
@@ -214,72 +215,60 @@
       </div>
     </div>
 
+<div class="greeting-row">
+      <div>
+        <div class="greeting-hello" id="greeting-text">Selamat pagi 👋</div>
+        <div class="greeting-title">Ringkasan Keuangan</div>
+      </div>
+      <button class="month-pill">📅 Juli 2026</button>
+    </div>
+
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
 
     <!-- BARIS 1 - HERO SALDO -->
     <div class="hero-saldo">
-      <div class="hero-kiri">
-        <div class="hero-label">SALDO TOTAL</div>
-        <div class="hero-nilai" id="saldo">Rp 0</div>
-        <div class="hero-perbandingan">
-          <span id="saldo-diff-icon">↑</span>
-          <span id="saldo-diff">+ Rp 0</span> dibanding bulan lalu
-          <span id="saldo-diff-persen" class="hero-badge">0%</span>
-        </div>
-        <div class="hero-sub">Semua rekening digabungkan</div>
+      <div class="hero-top-row">
+        <span class="hero-label">Saldo Saat Ini</span>
+        <button class="hero-eye" id="btn-eye-saldo" onclick="toggleSaldo()">👁</button>
       </div>
-      <div class="hero-kanan">
-        <div class="hero-grafik-label">PERKEMBANGAN SALDO (30 HARI)</div>
-        <canvas id="grafikSaldoHarian" height="120"></canvas>
+      <div class="hero-nilai" id="saldo">Rp 0</div>
+      <div class="hero-divider"></div>
+      <div class="hero-status-row">
+        <span class="hero-status-badge" id="hero-status-badge">✓ Aman</span>
+        <span class="hero-status-divider"></span>
+        <span class="hero-sisa-label">Sisa anggaran bulan ini <span class="hero-sisa-nilai" id="sisa-anggaran">Rp 0</span></span>
       </div>
     </div>
 
     <!-- BARIS 2 - 3 KARTU -->
-    <div class="tiga-kartu">
-      <div class="kartu-stat">
-        <div class="kartu-stat-icon" style="background:#dcfce7">⬆</div>
-        <div class="kartu-stat-body">
-          <div class="kartu-stat-label">PEMASUKAN BULAN INI</div>
-          <div class="kartu-stat-nilai income" id="total-masuk">Rp 0</div>
-          <div class="kartu-stat-sub">Dari berbagai sumber</div>
-          <div class="kartu-stat-avg">Rata-rata harian <strong id="avg-masuk">Rp 0</strong></div>
+    <div class="ringkasan-card">
+      <div class="ringkasan-col">
+        <div class="ringkasan-icon" style="background:#DCFCE7;color:#16A34A">⬇</div>
+        <div>
+          <div class="ringkasan-label">Pemasukan</div>
+          <div class="ringkasan-nilai" id="total-masuk">Rp 0</div>
         </div>
       </div>
-      <div class="kartu-stat">
-        <div class="kartu-stat-icon" style="background:#fee2e2">⬇</div>
-        <div class="kartu-stat-body">
-          <div class="kartu-stat-label">PENGELUARAN BULAN INI</div>
-          <div class="kartu-stat-nilai expense" id="total-keluar">Rp 0</div>
-          <div class="kartu-stat-sub" id="jml-transaksi-keluar">Total 0 transaksi</div>
-          <div class="kartu-stat-avg">Rata-rata harian <strong id="avg-keluar">Rp 0</strong></div>
-        </div>
-      </div>
-      <div class="kartu-stat">
-        <div class="kartu-stat-icon" style="background:#ede9fe">🎯</div>
-        <div class="kartu-stat-body">
-          <div class="kartu-stat-label">SISA ANGGARAN BULAN INI</div>
-          <div class="kartu-stat-nilai" id="sisa-anggaran" style="color:#6366f1">Rp 0</div>
-          <div id="saving-rate-label" class="kartu-stat-badge">-</div>
-          <div class="kartu-stat-avg">Saving rate <strong id="saving-rate">0%</strong> · <span id="saving-rate-status" style="color:#16a34a;font-weight:600"></span></div>
+      <div class="ringkasan-divider"></div>
+      <div class="ringkasan-col">
+        <div class="ringkasan-icon" style="background:#FEE2E2;color:#DC2626">⬆</div>
+        <div>
+          <div class="ringkasan-label">Pengeluaran</div>
+          <div class="ringkasan-nilai" id="total-keluar">Rp 0</div>
         </div>
       </div>
     </div>
 
     <!-- BARIS 3 - INSIGHT & ANGGARAN -->
-    <div class="two-col" style="margin-bottom:12px">
-      <div class="section-box">
-        <div class="section-title">💡 Insight Otomatis</div>
-        <div id="insight-list"></div>
+    <div class="section-box" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-title" style="margin-bottom:0">Perlu Perhatian</div>
+        <button onclick="gotoTab('anggaran', document.querySelectorAll('.nav-tab')[2])" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif">Lihat semua →</button>
       </div>
-      <div class="section-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="section-title" style="margin-bottom:0">Anggaran Bulan Ini</div>
-          <button onclick="gotoTab('anggaran', document.querySelectorAll('.nav-tab')[2])" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif">Lihat semua →</button>
-        </div>
-        <div id="budget-mini"></div>
-      </div>
+      <div id="budget-mini"></div>
     </div>
+    <div id="insight-list" style="margin-bottom:12px"></div>
 
     <!-- BARIS 4 - GRAFIK -->
     <div class="two-col" style="margin-bottom:12px">
