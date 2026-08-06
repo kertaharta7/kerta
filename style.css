@@ -374,12 +374,16 @@ body {
 }
 
 /* RESPONSIVE — app is mobile-first by default; this just gives a bit more room on tablets/desktop */
-@media (min-width: 480px) {
+@media (min-width: 768px) {
   .cards-grid { grid-template-columns: repeat(4, 1fr); }
   .cards-grid .card:first-child { grid-column: auto; }
   .two-col { grid-template-columns: 1fr 1fr; }
   .form-grid { grid-template-columns: 1fr 1fr; }
   .budget-form { flex-direction: row; }
+}
+
+@media (min-width: 768px) {
+  .tab-content { max-width: 1000px; margin: 0 auto; }
 }
 
 .tx-edit {
@@ -505,13 +509,6 @@ body {
   letter-spacing: normal;
   margin-bottom: 12px;
   text-transform: none;
-}
-
-@media (min-width: 480px) {
-  .hero-saldo { flex-direction: row; align-items: center; gap: 0; padding: 24px 28px; }
-  .hero-kiri { flex: 1; padding-right: 24px; border-right: 1px solid rgba(255,255,255,0.2); }
-  .hero-kanan { flex: 1.4; padding-left: 24px; }
-  .hero-nilai { font-size: 36px; }
 }
 
 /* ======= TIGA KARTU STAT ======= */
@@ -814,4 +811,12 @@ body {
 @media (min-width: 768px) {
   .desktop-only { display: block; }
   .desktop-only.two-col { display: grid; }
+}
+
+.btn-bell {
+  width: 40px; height: 40px; border-radius: 12px;
+  border: none; background: var(--bg);
+  cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary);
 }
