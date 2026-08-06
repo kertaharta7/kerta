@@ -215,7 +215,7 @@
       </div>
     </div>
 
-<div class="greeting-row">
+    <div class="greeting-row">
       <div>
         <div class="greeting-hello" id="greeting-text">Selamat pagi 👋</div>
         <div class="greeting-title">Ringkasan Keuangan</div>
@@ -225,8 +225,6 @@
 
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
-
-<p id="greeting-text" style="font-size:13px;color:var(--text-secondary);margin:0 0 12px;font-weight:500">Selamat pagi 👋</p>
 
     <!-- SALDO -->
     <div class="hero-saldo" style="margin-bottom:12px">
@@ -285,52 +283,37 @@
 
     <!-- ===== KONTEN TAMBAHAN — HANYA TAMPIL DI LAYAR LEBAR ===== -->
     <div class="section-box desktop-only" style="margin-top:12px">
-  <div class="section-title">Perkembangan Saldo (30 Hari)</div>
-  <div style="position:relative;height:220px">
-    <canvas id="grafikSaldoHarian"></canvas>
-  </div>
-</div>
-<div class="two-col desktop-only" style="margin-top:12px">
-  <div class="section-box">
-    <div class="section-title">Pengeluaran 30 Hari Terakhir</div>
-    <div style="position:relative;height:220px">
-      <canvas id="grafikPengeluaranHarian"></canvas>
-    </div>
-  </div>
-  <div class="section-box">
-    <div class="section-title">Pengeluaran per Kategori (Bulan Ini)</div>
-    <div style="display:flex;gap:16px;align-items:center">
-      <div style="flex-shrink:0;width:160px;height:160px">
-        <canvas id="grafikDonut"></canvas>
+      <div class="section-title">Perkembangan Saldo (30 Hari)</div>
+      <div style="position:relative;height:220px">
+        <canvas id="grafikSaldoHarian"></canvas>
       </div>
-      <div id="donut-legend" style="flex:1;font-size:12px"></div>
     </div>
-  </div>
-</div>
-
-  </div>
-
-    <!-- BARIS 5 - TRANSAKSI & REKENING -->
-    <div class="two-col">
+    <div class="two-col desktop-only" style="margin-top:12px">
       <div class="section-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="section-title" style="margin-bottom:0">Transaksi Terakhir</div>
-          <button onclick="gotoTab('transaksi', document.querySelectorAll('.nav-tab')[1])" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif">Lihat semua →</button>
+        <div class="section-title">Pengeluaran 30 Hari Terakhir</div>
+        <div style="position:relative;height:220px">
+          <canvas id="grafikPengeluaranHarian"></canvas>
         </div>
-        <ul id="list-transaksi-mini" class="tx-list-mini"></ul>
       </div>
       <div class="section-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="section-title" style="margin-bottom:0">Rekening Saya</div>
+        <div class="section-title">Pengeluaran per Kategori (Bulan Ini)</div>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="flex-shrink:0;width:160px;height:160px">
+            <canvas id="grafikDonut"></canvas>
+          </div>
+          <div id="donut-legend" style="flex:1;font-size:12px"></div>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-          <button onclick="aturSaldoAwal()" class="btn-secondary">Atur Saldo Awal</button>
-        </div>
-        <div id="rekening-list"></div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:8px">
-          <span style="font-size:13px;font-weight:600;color:#1e293b">Total Saldo</span>
-          <span style="font-size:13px;font-weight:700;color:#16a34a" id="total-saldo-rekening">Rp 0</span>
-        </div>
+      </div>
+    </div>
+    <div class="section-box desktop-only" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-title" style="margin-bottom:0">Rekening Saya</div>
+        <button onclick="aturSaldoAwal()" class="btn-secondary">Atur Saldo Awal</button>
+      </div>
+      <div id="rekening-list"></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:8px">
+        <span style="font-size:13px;font-weight:600;color:#1e293b">Total Saldo</span>
+        <span style="font-size:13px;font-weight:700;color:#16a34a" id="total-saldo-rekening">Rp 0</span>
       </div>
     </div>
 
