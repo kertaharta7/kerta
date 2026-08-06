@@ -1550,11 +1550,14 @@ const txBulanLalu = transaksi.filter(t => t.tanggal.slice(0, 7) === bulanLalu);
   if (totalHutang > 0) insights.push({ icon: '💸', warna: '#ef4444', teks: `Masih ada hutang sebesar <strong>${formatRupiah(totalHutang)}</strong> yang belum lunas.` });
   if (insights.length === 0) { container.innerHTML = ''; return; }
   const top = insights[0];
-  container.innerHTML = `<div class="insight-banner">
+  const rest = insights.slice(1);
+  const restHTML = rest.map(i => `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--border)"><span style="font-size:16px;flex-shrink:0">${i.icon}</span><p style="font-size:13px;color:var(--text-primary);line-height:1.5;margin:0">${i.teks}</p></div>`).join('');
+  container.innerHTML = `<div class="insight-banner" onclick="toggleInsightAll()">
     <div class="ib-icon">💡</div>
     <div class="ib-body"><span class="ib-title">Insight Hari Ini</span>${top.teks}</div>
-    <span class="ib-arrow">›</span>
-  </div>`;
+    <span class="ib-arrow" id="insight-arrow">${rest.length > 0 ? '›' : ''}</span>
+  </div>
+  ${rest.length > 0 ? `<div id="insight-extra" style="display:none;background:var(--card);border-radius:0 0 var(--radius-card) var(--radius-card);margin-top:-8px;padding-top:8px;box-shadow:var(--shadow-soft)">${restHTML}</div>` : ''}`;
 }
 
 // ======= NOTIFIKASI =======
@@ -2221,6 +2224,15 @@ function exportExcel() {
   toggleMenu();
 }
 
+function toggleInsightAll() {
+  const extra = document.getElementById('insight-extra');
+  const arrow = document.getElementById('insight-arrow');
+  if (!extra) return;
+  const open = extra.style.display !== 'none';
+  extra.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '›' : '⌄';
+}
+
 // ======= EXPOSE =======
 window.gotoTab = gotoTab;
 window.setType = setType;
@@ -2275,3 +2287,4 @@ window.renderGrafikPengeluaranHarianPeriode = renderGrafikPengeluaranHarianPerio
 window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
 window.toggleMenu = toggleMenu;
 window.toggleSaldo = toggleSaldo;
+window.toggleInsightAll = toggleInsightAll;
