@@ -544,6 +544,7 @@ function renderGrafikPengeluaranHarianPeriode(txFiltered, periode, tipe) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
@@ -606,6 +607,7 @@ function renderGrafikSaldoHarianPeriode(txFiltered, periode, tipe) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
@@ -1006,7 +1008,7 @@ function renderGrafikSaldoHarian() {
   }
   if (grafikSaldoHarianInstance) grafikSaldoHarianInstance.destroy();
   const labels = hari30.map(tgl => { const d = new Date(tgl); return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); });
-  grafikSaldoHarianInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: saldoPerHari, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: true, tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 6 } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + ' jt' : v >= 1000 ? (v/1000).toFixed(0) + ' rb' : v } } } } });
+  grafikSaldoHarianInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: saldoPerHari, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 6 } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + ' jt' : v >= 1000 ? (v/1000).toFixed(0) + ' rb' : v } } } } });
 }
 
 function renderGrafikPengeluaranHarian() {
@@ -1017,7 +1019,7 @@ function renderGrafikPengeluaranHarian() {
   const dataPerHari = hari30.map(tgl => transaksi.filter(t => t.tanggal === tgl && t.tipe === 'keluar' && t.kategori !== 'Transfer').reduce((s,t) => s+t.jumlah, 0));
   const labels = hari30.map(tgl => { const d = new Date(tgl); return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); });
   if (grafikPengeluaranHarianInstance) grafikPengeluaranHarianInstance.destroy();
-  grafikPengeluaranHarianInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: dataPerHari, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6366f1', pointHoverRadius: 5, fill: true, tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 8 } }, y: { grid: { color: '#f8fafc' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'jt' : v >= 1000 ? (v/1000).toFixed(0)+'rb' : v } } } } });
+  grafikPengeluaranHarianInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: dataPerHari, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6366f1', pointHoverRadius: 5, fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.raw) } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 8 } }, y: { grid: { color: '#f8fafc' }, ticks: { font: { size: 10 }, callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'jt' : v >= 1000 ? (v/1000).toFixed(0)+'rb' : v } } } } });
 }
 
 function renderGrafikDonut() {
