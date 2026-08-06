@@ -820,3 +820,9 @@ body {
   display: flex; align-items: center; justify-content: center;
   color: var(--text-primary);
 }
+
+#greeting-text {
+  display: block;
+  padding: 12px 16px 0;
+  clear: both;
+}
