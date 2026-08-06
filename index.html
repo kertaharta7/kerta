@@ -226,8 +226,8 @@
   <!-- TAB RINGKASAN -->
   <div id="tab-ringkasan" class="tab-content active">
 
-    <!-- BARIS 1 - HERO SALDO -->
-    <div class="hero-saldo">
+    <!-- SALDO -->
+    <div class="hero-saldo" style="margin-bottom:12px">
       <div class="hero-top-row">
         <span class="hero-label">Saldo Saat Ini</span>
         <button class="hero-eye" id="btn-eye-saldo" onclick="toggleSaldo()">👁</button>
@@ -241,8 +241,8 @@
       </div>
     </div>
 
-    <!-- BARIS 2 - 3 KARTU -->
-    <div class="ringkasan-card">
+    <!-- PEMASUKAN / PENGELUARAN -->
+    <div class="ringkasan-card" style="margin-bottom:12px">
       <div class="ringkasan-col">
         <div class="ringkasan-icon" style="background:#DCFCE7;color:#16A34A">⬇</div>
         <div>
@@ -260,32 +260,28 @@
       </div>
     </div>
 
-    <!-- BARIS 3 - INSIGHT & ANGGARAN -->
+    <!-- PERLU PERHATIAN -->
     <div class="section-box" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div class="section-title" style="margin-bottom:0">Perlu Perhatian</div>
         <button onclick="gotoTab('anggaran', document.querySelectorAll('.nav-tab')[2])" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif">Lihat semua →</button>
       </div>
       <div id="budget-mini"></div>
     </div>
+
+    <!-- INSIGHT -->
     <div id="insight-list" style="margin-bottom:12px"></div>
 
-    <!-- BARIS 4 - GRAFIK -->
-    <div class="two-col" style="margin-bottom:12px">
-      <div class="section-box">
-        <div class="section-title">Pengeluaran 30 Hari Terakhir</div>
-        <canvas id="grafikPengeluaranHarian" height="150"></canvas>
+    <!-- TRANSAKSI TERAKHIR -->
+    <div class="section-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="section-title" style="margin-bottom:0">Transaksi Terakhir</div>
+        <button onclick="gotoTab('transaksi', document.querySelectorAll('.nav-tab')[1])" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif">Lihat semua →</button>
       </div>
-      <div class="section-box">
-        <div class="section-title">Pengeluaran per Kategori (Bulan Ini)</div>
-        <div style="display:flex;gap:16px;align-items:center">
-          <div style="flex-shrink:0;width:160px;height:160px">
-            <canvas id="grafikDonut"></canvas>
-          </div>
-          <div id="donut-legend" style="flex:1;font-size:12px"></div>
-        </div>
-      </div>
+      <ul id="list-transaksi-mini" class="tx-list-mini" style="list-style:none;padding:0;margin:0"></ul>
     </div>
+
+  </div>
 
     <!-- BARIS 5 - TRANSAKSI & REKENING -->
     <div class="two-col">
