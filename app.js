@@ -2290,3 +2290,4 @@ window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
 window.toggleMenu = toggleMenu;
 window.toggleSaldo = toggleSaldo;
 window.toggleInsightAll = toggleInsightAll;
+
