@@ -918,10 +918,15 @@ function updateBudget(katLama) {
 }
 
 function renderBudget() {
-  const bulanIni = new Date().toISOString().slice(0, 7);
+  const tipeFilter = filterDashboardType || 'bulan';
+  const periodeFilter = filterDashboardPeriode || new Date().toISOString().slice(0, 7);
+  const cocokPeriode = (t) => tipeFilter === 'tahun'
+    ? t.tanggal.slice(0, 4) === periodeFilter
+    : t.tanggal.slice(0, 7) === periodeFilter;
+
   const keys = Object.keys(budget);
   const totalAnggaran = Object.values(budget).reduce((s, v) => s + v, 0);
-  const totalTerpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+  const totalTerpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori !== 'Transfer' && cocokPeriode(t)).reduce((s, t) => s + t.jumlah, 0);
   const totalSisa = totalAnggaran - totalTerpakai;
 
   const elAnggaran = document.getElementById('total-anggaran');
@@ -941,7 +946,7 @@ function renderBudget() {
     else {
       const dataBudget = keys.map(kat => {
         const batas = budget[kat];
-        const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+        const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && cocokPeriode(t)).reduce((s, t) => s + t.jumlah, 0);
         const persen = Math.min((terpakai / batas) * 100, 100);
         return { kat, persen };
       }).sort((a, b) => b.persen - a.persen).slice(0, 2);
@@ -965,7 +970,7 @@ function renderBudget() {
   if (keys.length === 0) { container.innerHTML = '<p style="font-size:13px;color:#aaa">Belum ada anggaran yang diset.</p>'; return; }
   container.innerHTML = keys.map(kat => {
     const batas = budget[kat];
-    const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && t.tanggal.slice(0, 7) === bulanIni).reduce((s, t) => s + t.jumlah, 0);
+    const terpakai = transaksi.filter(t => t.tipe === 'keluar' && t.kategori === kat && cocokPeriode(t)).reduce((s, t) => s + t.jumlah, 0);
     const persen = Math.min((terpakai / batas) * 100, 100).toFixed(0);
     let kelas = '', status = '';
     if (terpakai > batas) { kelas = 'lewat'; status = `⚠️ Melebihi ${formatRupiah(terpakai - batas)}`; }
@@ -2290,4 +2295,3 @@ window.renderGrafikSaldoHarianPeriode = renderGrafikSaldoHarianPeriode;
 window.toggleMenu = toggleMenu;
 window.toggleSaldo = toggleSaldo;
 window.toggleInsightAll = toggleInsightAll;
-
