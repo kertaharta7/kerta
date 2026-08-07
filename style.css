@@ -686,16 +686,7 @@ body {
 }
 .greeting-hello { font-size: 14px; color: var(--text-secondary); font-weight: 500; margin-bottom: 4px; }
 .greeting-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
-.month-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px; font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
+
 
 /* ======= HERO SALDO v2 (gradient card, gaya referensi) ======= */
 .hero-saldo {
