@@ -254,6 +254,7 @@ function gotoTab(tabId, el) {
   const filterBar = document.getElementById('dashboard-filter-bar');
   if (filterBar) filterBar.style.display = tabId === 'ringkasan' ? 'flex' : 'none';
   if (tabId === 'ringkasan') renderDashboard();
+  if (tabId === 'anggaran') renderBudget();
 }
 
 // ======= FORMAT =======
