@@ -264,11 +264,20 @@ function formatRupiah(angka) {
 
 let saldoTersembunyi = false;
 function toggleSaldo() {
-  saldoTersembunyi = !saldoTersembunyi;
   const el = document.getElementById('saldo');
   const btn = document.getElementById('btn-eye-saldo');
-  if (saldoTersembunyi) { el.dataset.asli = el.textContent; el.textContent = 'Rp ••••••'; btn.textContent = '🙈'; }
-  else { el.textContent = el.dataset.asli || el.textContent; btn.textContent = '👁'; }
+  if (!el || !btn) return;
+  const sedangSembunyi = btn.dataset.tersembunyi === '1';
+  if (!sedangSembunyi) {
+    el.dataset.asli = el.textContent;
+    el.textContent = 'Rp ••••••';
+    btn.textContent = '🙈';
+    btn.dataset.tersembunyi = '1';
+  } else {
+    el.textContent = el.dataset.asli || el.textContent;
+    btn.textContent = '👁';
+    btn.dataset.tersembunyi = '0';
+  }
 }
 
 function updateGreeting() {
