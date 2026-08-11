@@ -281,10 +281,23 @@
     </div>
 
     <!-- ===== KONTEN TAMBAHAN — HANYA TAMPIL DI LAYAR LEBAR ===== -->
-    <div class="section-box desktop-only" style="margin-top:12px">
-      <div class="section-title">Perkembangan Saldo (30 Hari)</div>
-      <div style="position:relative;height:220px">
-        <canvas id="grafikSaldoHarian"></canvas>
+    <div class="two-col desktop-only" style="margin-top:12px">
+      <div class="section-box">
+        <div class="section-title">Perkembangan Saldo (30 Hari)</div>
+        <div style="position:relative;height:220px">
+          <canvas id="grafikSaldoHarian"></canvas>
+        </div>
+      </div>
+      <div class="section-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="section-title" style="margin-bottom:0">Rekening Saya</div>
+          <button onclick="aturSaldoAwal()" class="btn-secondary">Atur Saldo Awal</button>
+        </div>
+        <div id="rekening-list"></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:8px">
+          <span style="font-size:13px;font-weight:600;color:#1e293b">Total Saldo</span>
+          <span style="font-size:13px;font-weight:700;color:#16a34a" id="total-saldo-rekening">Rp 0</span>
+        </div>
       </div>
     </div>
     <div class="two-col desktop-only" style="margin-top:12px">
@@ -302,17 +315,6 @@
           </div>
           <div id="donut-legend" style="flex:1;font-size:12px"></div>
         </div>
-      </div>
-    </div>
-    <div class="section-box desktop-only" style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div class="section-title" style="margin-bottom:0">Rekening Saya</div>
-        <button onclick="aturSaldoAwal()" class="btn-secondary">Atur Saldo Awal</button>
-      </div>
-      <div id="rekening-list"></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:8px">
-        <span style="font-size:13px;font-weight:600;color:#1e293b">Total Saldo</span>
-        <span style="font-size:13px;font-weight:700;color:#16a34a" id="total-saldo-rekening">Rp 0</span>
       </div>
     </div>
 
@@ -487,6 +489,15 @@
             <input type="text" id="hp-nama" placeholder="Nama orang" />
             <input type="number" id="hp-jumlah" placeholder="Jumlah total (Rp)" min="0" />
             <input type="date" id="hp-tanggal" />
+            <select id="hp-metode">
+              <option value="Cash">💵 Cash</option>
+              <option value="BNI">🏦 BNI</option>
+              <option value="BSI">🏦 BSI</option>
+              <option value="DANA">🏦 DANA</option>
+              <option value="OVO">🏦 OVO</option>
+              <option value="SeaBank">🏦 SeaBank</option>
+              <option value="GoPay">🏦 GoPay</option>
+            </select>
             <input type="text" id="hp-keterangan" placeholder="Keterangan (opsional)" />
             <button class="btn-simpan" id="btn-simpan-hp" onclick="tambahHP()">+ Tambah</button>
           </div>
