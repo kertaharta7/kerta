@@ -1102,9 +1102,33 @@ function tambahHP() {
   const nama = document.getElementById('hp-nama').value.trim();
   const jumlah = parseFloat(document.getElementById('hp-jumlah').value);
   const tanggal = document.getElementById('hp-tanggal').value;
+  const metode = document.getElementById('hp-metode')?.value || 'Cash';
   const keterangan = document.getElementById('hp-keterangan').value.trim();
   if (!nama || !jumlah || jumlah <= 0 || !tanggal) { alert('Lengkapi nama, jumlah, dan tanggal!'); return; }
   push(hpRef, { nama, jumlah, tanggal, keterangan, tipe: hpTab, terbayar: 0 });
+
+  if (hpTab === 'hutang') {
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'masuk',
+      keterangan: keterangan || `Pinjam dari ${nama}`,
+      jumlah,
+      kategori: 'Pinjaman Masuk',
+      tanggal,
+      metode
+    });
+  } else {
+    push(transaksiRef, {
+      id: Date.now(),
+      tipe: 'keluar',
+      keterangan: keterangan || `Pinjamkan ke ${nama}`,
+      jumlah,
+      kategori: 'Pinjaman Keluar',
+      tanggal,
+      metode
+    });
+  }
+
   document.getElementById('hp-nama').value = '';
   document.getElementById('hp-jumlah').value = '';
   document.getElementById('hp-keterangan').value = '';
