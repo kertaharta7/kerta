@@ -760,13 +760,20 @@ function render() {
     if (tgl) filtered = transaksi.filter(t => t.tanggal === tgl);
   }
 
-  const cari = document.getElementById('filter-cari')?.value.toLowerCase().trim();
-  if (cari) {
-    filtered = filtered.filter(t =>
-      t.keterangan.toLowerCase().includes(cari) ||
-      t.kategori.toLowerCase().includes(cari) ||
-      t.metode.toLowerCase().includes(cari)
-    );
+    const elRingkasanFilter = document.getElementById('ringkasan-filter');
+  if (elRingkasanFilter) {
+    const filterAktif = filterType !== 'semua' || cari;
+    if (filterAktif && filtered.length > 0) {
+      const totalMasukFiltered = filtered.filter(t => t.tipe === 'masuk').reduce((s, t) => s + t.jumlah, 0);
+      const totalKeluarFiltered = filtered.filter(t => t.tipe === 'keluar').reduce((s, t) => s + t.jumlah, 0);
+      let ringkasanHTML = `<strong>${filtered.length} transaksi</strong> ditemukan`;
+      if (totalMasukFiltered > 0) ringkasanHTML += ` &nbsp;·&nbsp; Masuk: <strong style="color:#16a34a">${formatRupiah(totalMasukFiltered)}</strong>`;
+      if (totalKeluarFiltered > 0) ringkasanHTML += ` &nbsp;·&nbsp; Keluar: <strong style="color:#dc2626">${formatRupiah(totalKeluarFiltered)}</strong>`;
+      elRingkasanFilter.innerHTML = ringkasanHTML;
+      elRingkasanFilter.style.display = 'block';
+    } else {
+      elRingkasanFilter.style.display = 'none';
+    }
   }
 
   const filteredBulanIni = transaksi.filter(t => {
