@@ -388,11 +388,12 @@
           <button class="btn-simpan" onclick="lakukanTransfer()">↔ Simpan Transfer</button>
         </div>
       </div>
-      <div class="section-box">
+            <div class="section-box">
         <div class="section-title">Riwayat Transaksi</div>
         <div style="margin-bottom:10px">
           <input type="text" id="filter-cari" placeholder="🔍 Cari transaksi..." oninput="render()" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;font-family:'Inter',sans-serif" />
         </div>
+        <div id="ringkasan-filter" style="display:none;margin-bottom:10px;padding:10px 12px;background:#f8fafc;border-radius:10px;font-size:13px"></div>
         <div class="filter-wrap">
           <div class="filter-type-toggle">
             <button class="filter-type-btn active" onclick="setFilterType('semua', this)">Semua</button>
