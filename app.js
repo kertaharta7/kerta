@@ -755,12 +755,21 @@ function render() {
     if (dari && sampai) filtered = transaksi.filter(t => t.tanggal >= dari && t.tanggal <= sampai);
     else if (dari) filtered = transaksi.filter(t => t.tanggal >= dari);
     else if (sampai) filtered = transaksi.filter(t => t.tanggal <= sampai);
-  } else if (filterType === 'tanggal') {
+    } else if (filterType === 'tanggal') {
     const tgl = document.getElementById('filter-tanggal-val')?.value;
     if (tgl) filtered = transaksi.filter(t => t.tanggal === tgl);
   }
 
-    const elRingkasanFilter = document.getElementById('ringkasan-filter');
+  const cari = document.getElementById('filter-cari')?.value.toLowerCase().trim();
+  if (cari) {
+    filtered = filtered.filter(t =>
+      t.keterangan.toLowerCase().includes(cari) ||
+      t.kategori.toLowerCase().includes(cari) ||
+      t.metode.toLowerCase().includes(cari)
+    );
+  }
+
+  const elRingkasanFilter = document.getElementById('ringkasan-filter');
   if (elRingkasanFilter) {
     const filterAktif = filterType !== 'semua' || cari;
     if (filterAktif && filtered.length > 0) {
